@@ -1,0 +1,50 @@
+dependencies {
+	implementation 'com.velocitypowered:velocity-api:4.1.0-SNAPSHOT'
+	compileOnly 'com.velocitypowered:velocity-proxy:4.1.0-SNAPSHOT'
+	annotationProcessor 'com.velocitypowered:velocity-api:4.1.0-SNAPSHOT'
+
+	implementation "org.spongepowered:configurate-core:${configurate}"
+	implementation "org.spongepowered:configurate-gson:${configurate}"
+	implementation "org.spongepowered:configurate-hocon:${configurate}"
+	implementation "org.spongepowered:configurate-jackson:${configurate}"
+	implementation "org.spongepowered:configurate-xml:${configurate}"
+	implementation "org.spongepowered:configurate-extra-dfu2:${configurate}"
+	implementation "org.spongepowered:configurate-extra-dfu3:${configurate}"
+	implementation "org.spongepowered:configurate-extra-dfu4:${configurate}"
+	implementation "org.spongepowered:configurate-extra-guice:${configurate}"
+	implementation "org.spongepowered:configurate-extra-kotlin:${configurate}"
+	implementation "net.kyori:adventure-serializer-configurate4:${adventure}"
+	implementation "io.leangen.geantyref:geantyref:2.0.0"
+	implementation "jakarta.inject:jakarta.inject-api:2.0.1"
+	implementation "aopalliance:aopalliance:1.0"
+	implementation 'io.netty:netty-all:4.1.114.Final'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	archiveClassifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	archiveClassifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+artifacts {
+	archives sourcesJar
+	archives javadocJar
+}
+
+configurations {
+	doc {
+		transitive = false
+	}
+}
+
+javadoc {
+	options.encoding = 'UTF-8'
+	options.links("https://jd.spongepowered.org/spongeapi/${api}")
+	options.links("https://jd.advntr.dev/api/4.16.0/")
+	source configurations.doc.collect { zipTree(it) }
+	options.addStringOption('Xdoclint:none', '-quiet')
+}

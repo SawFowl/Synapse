@@ -22,3 +22,14 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+/.gradle
+.project
+.classpath
+/.settings
+/build
+/synapse-api/.settings
+/synapse-api/bin
+/synapse-api/build
+/synapse-plugin/.settings
+/synapse-plugin/bin
+/synapse-plugin/build

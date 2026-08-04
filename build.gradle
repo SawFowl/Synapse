@@ -1,0 +1,59 @@
+plugins {
+	id("java")
+	id("eclipse")
+	id("idea")
+}
+
+group = "sawfowl.synapse"
+version = "${major}.${minor}.${patch}-${suffix}"
+
+subprojects {
+	apply {
+		plugin 'java'
+	}
+	java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+	repositories {
+		mavenCentral()
+		maven {
+			name = "Sponge"
+			url = "https://repo.spongepowered.org/repository/maven-public"
+		}
+		maven {
+			name 'papermc'
+			url 'https://repo.papermc.io/repository/maven-public/'
+		}
+		maven {
+			name 'Sonatype'
+			url 'https://oss.sonatype.org/content/repositories/snapshots/'
+		}
+		maven {
+			name 'CodemcReleases'
+			url 'https://repo.codemc.io/repository/maven-releases/'
+		}
+		maven {
+			name 'William278'
+			url "https://repo.william278.net/releases"
+		}
+		maven {
+			name = "GeyserMC"
+			url = "https://repo.opencollab.dev/main/"
+		}
+		maven {
+			name 'central-snapshots'
+			url "https://central.sonatype.com/repository/maven-snapshots/"
+		}
+	}
+	tasks.withType(JavaCompile) {
+		options.encoding = 'UTF-8'
+		it.options.getRelease().set(25)
+	}
+	configurations {
+		doc {
+			transitive false
+		}
+	}
+}
+
+subprojects.each { subproject -> evaluationDependsOn(subproject.path)}
+
+jar.enabled(false)
