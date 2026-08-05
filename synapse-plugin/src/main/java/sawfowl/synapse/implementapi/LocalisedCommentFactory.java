@@ -19,7 +19,7 @@ public class LocalisedCommentFactory implements Factory<LocalisedComment, Object
 
 	@Override
 	public Processor<Object> make(LocalisedComment data, Type type) {
-		return (value, destination) -> {
+		return (_, destination) -> {
 			if (destination instanceof CommentedConfigurationNodeIntermediary<?> node) {
 				if(node.comment() != null && !node.comment().isEmpty()) return;
 				if(data.plugin() == null || data.path() == null || data.path().length == 0) {
