@@ -20,7 +20,7 @@ public class IServiceProvider implements ServiceProvider {
 	private Map<Class<?>, Object> services = new HashMap<>();
 	public IServiceProvider(ProxyServer server) {
 		register(ProxyServer.class, server);
-		register(LoggerService.class, new ILoggerService());
+		register(LoggerService.class, ILoggerService.getInstance());
 		register(BuilderService.class, new IBuilderService());
 		register(CallbackSevice.class, new ICallbackService());
 		register(LocaleService.class, ILocaleService.getInstance());

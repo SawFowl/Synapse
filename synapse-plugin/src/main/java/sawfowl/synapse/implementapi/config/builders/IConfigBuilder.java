@@ -23,7 +23,7 @@ public class IConfigBuilder implements ConfigBuilder {
 	private TypeSerializerCollection collection;
 	private PluginContainer container;
 	public IConfigBuilder(PluginContainer container) {
-	//	if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
+		if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
 		this.container = container;
 	}
 

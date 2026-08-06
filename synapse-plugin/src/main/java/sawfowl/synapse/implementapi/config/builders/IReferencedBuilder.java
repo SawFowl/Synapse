@@ -30,7 +30,7 @@ public class IReferencedBuilder<T> implements ReferencedConfigBuilder<T> {
 		this.container = container;
 		this.clazz = type;
 		this.value = null;
-		//if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
+		if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -39,7 +39,7 @@ public class IReferencedBuilder<T> implements ReferencedConfigBuilder<T> {
 		this.container = container;
 		this.value = value;
 		this.clazz = (Class<T>) value.getClass();
-		//if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
+		if(SynapsePlugin.getConfig() != null) this.type = SynapsePlugin.getConfig().getConfigSettings(container).getType();
 	}
 
 	@Override

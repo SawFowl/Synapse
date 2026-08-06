@@ -84,13 +84,13 @@ public class SynapsePlugin {
 		}
 		mainConfig = null;
 		locales = ILocaleService.getInstance().createLocales(container, LocaleConfig.class);
-		if(!locales.contains(Locales.DEFAULT)) locales.createReferencedTranslation(ConfigTypes.YAML, Locales.DEFAULT, LocaleConfig.class);
-		if(!locales.contains(Locales.RU_RU)) locales.createReferencedTranslation(ConfigTypes.YAML, Locales.RU_RU, LocaleConfig.createRu());
+		if(!locales.contains(Locales.DEFAULT)) locales.createReferencedTranslation(ConfigTypes.HOCON, Locales.DEFAULT, LocaleConfig.class);
+		if(!locales.contains(Locales.RU_RU)) locales.createReferencedTranslation(ConfigTypes.HOCON, Locales.RU_RU, LocaleConfig.createRu());
 		if(config == null) config = IConfigurationService.getInstance()
 				.createReferencedConfig(container, Config.class)
 				.setPath(dataDirectory)
 				.setName("Config")
-				.setType(ConfigTypes.YAML)
+				.setType(ConfigTypes.HOCON)
 				.build();
 		if(getConfig().getLocalesSettings(container).isForcedUse()) {
 			@SuppressWarnings("unchecked")
