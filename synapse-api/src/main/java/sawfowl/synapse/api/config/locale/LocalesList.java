@@ -9,8 +9,8 @@ import javax.annotation.Nullable;
 import com.velocitypowered.api.proxy.Player;
 
 import sawfowl.synapse.api.Locales;
-import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.config.ConfigTypes;
+import sawfowl.synapse.api.services.LocaleService;
 
 /**
  * A collection of localizations for your plugin.<br>
@@ -139,7 +139,7 @@ public interface LocalesList<@Nullable T extends Translation> {
 	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
 	 */
 	default Locale getSystemOrDefaultLocale() {
-		return Synapse.getInstance().getLocaleService().getSystemOrDefaultLocale();
+		return LocaleService.get().getSystemOrDefaultLocale();
 	}
 
 }

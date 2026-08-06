@@ -1,13 +1,17 @@
-package sawfowl.synapse.api.config.text;
+package sawfowl.synapse.api.text;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import com.velocitypowered.api.command.CommandSource;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import sawfowl.synapse.api.text.callback.Callback;
 
 public class TextUtils {
 
@@ -15,18 +19,16 @@ public class TextUtils {
 	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link #createCallBack(Component, Consumer)}
 	 */
-	/*public static Component createCallBack(Component component, Runnable runnable) {
-		return createCallBack(component, cause -> {
-			runnable.run();
-		});
+	public static Component createCallBack(Component component, Runnable runnable) {
+		return createCallBack(component, _ -> runnable.run());
 	}
 
 	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link SpongeComponents#executeCallback(callback)}
 	 */
-/*	public static Component createCallBack(Component component, Consumer<CommandCause> callback) {
-		return component.clickEvent(SpongeComponents.executeCallback(callback));
+	public static Component createCallBack(Component component, Consumer<CommandSource> callback) {
+		return component.clickEvent(Callback.of(callback));
 	}
 
 	/**

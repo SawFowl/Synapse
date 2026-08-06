@@ -1,7 +1,6 @@
-package sawfowl.synapse.api.config.text.placeholders;
+package sawfowl.synapse.api.text;
 
 import net.kyori.adventure.text.Component;
-import sawfowl.synapse.api.config.text.Text;
 
 @FunctionalInterface
 public interface Placeholder<T> {

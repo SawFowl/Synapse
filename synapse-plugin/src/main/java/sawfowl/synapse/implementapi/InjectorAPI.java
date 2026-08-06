@@ -21,7 +21,6 @@ public class InjectorAPI extends AbstractModule {
 	protected void configure() {
 		bind(Synapse.class).toInstance(synapse);
 		this.requestStaticInjection(Synapse.class);
-		this.requestStaticInjection(LocalisedCommentFactory.class);
 	}
 
 }

@@ -1,17 +1,20 @@
-package sawfowl.synapse.api.config.text;
+package sawfowl.synapse.api.text;
 
 import java.util.function.Consumer;
+
+import com.velocitypowered.api.command.CommandSource;
 
 import net.kyori.adventure.builder.AbstractBuilder;
 import net.kyori.adventure.text.Component;
 
-import sawfowl.synapse.api.config.text.placeholders.Placeholders;
-import sawfowl.synapse.api.config.text.placeholders.Placeholders.DefaultPlaceholderKeys;
+import sawfowl.synapse.api.services.BuilderService;
+import sawfowl.synapse.api.services.PlaceholderService;
+import sawfowl.synapse.api.services.PlaceholderService.DefaultPlaceholderKeys;
 
 public interface Text {
 
 	private static Builder builder() {
-		return null; // TO DO implement this
+		return BuilderService.get().get(Builder.class);
 	}
 
 	static Text of(Component component) {
@@ -88,6 +91,11 @@ public interface Text {
 
 	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
+	 */
+	Text createCallBack(Consumer<CommandSource> callback);
+
+	/**
+	 * Adding the execution of arbitrary code when you click on text.<br>
 	 * It is used {@link #createCallBack(Consumer)}
 	 */
 	Text createCallBack(Runnable runnable);
@@ -103,7 +111,7 @@ public interface Text {
 	 */
 	Text removeDecorations();
 
-	default Text replace(Placeholders.DefaultPlaceholderKeys key, String value) {
+	default Text replace(DefaultPlaceholderKeys key, String value) {
 		return replace(key.textKey(), value);
 	}
 
@@ -116,15 +124,15 @@ public interface Text {
 	}
 
 	default <T> Text applyPlaceholders(T target, Component def) {
-		return Placeholders.apply(this, target, def);
+		return PlaceholderService.get().apply(this, target, def);
 	}
 
 	default <T> Text applyPlaceholders(Component def, Object... args) {
-		return Placeholders.apply(this, def, args);
+		return PlaceholderService.get().apply(this, def, args);
 	}
 
 	default <T> Text applySystemPlaceholders(Component def) {
-		return Placeholders.applySystemPlaceholders(this, def);
+		return PlaceholderService.get().applySystemPlaceholders(this, def);
 	}
 
 	public interface Builder extends AbstractBuilder<Text> {

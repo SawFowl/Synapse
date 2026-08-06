@@ -158,7 +158,7 @@ public interface Config {
 	}
 
 	/**
-	 * See {@link ConfigurationNode#get(Class)}
+	 * See {@link ConfigurationNode#find(Class)}
 	 */
 	@Nullable default <T> T getObject(Class<T> clazz, Object... path) {
 		try {

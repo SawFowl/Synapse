@@ -9,8 +9,8 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
-import sawfowl.synapse.api.config.text.Text;
-import sawfowl.synapse.api.config.text.TextUtils;
+import sawfowl.synapse.api.text.Text;
+import sawfowl.synapse.api.text.TextUtils;
 
 /**
  * This interface is designed to simplify the creation of localizations and contains methods for simplifying the writing of formatted text and the use of replacements when getting text from localization.

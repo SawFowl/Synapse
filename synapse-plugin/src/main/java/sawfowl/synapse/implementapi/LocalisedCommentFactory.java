@@ -6,15 +6,11 @@ import org.spongepowered.configurate.CommentedConfigurationNodeIntermediary;
 import org.spongepowered.configurate.objectmapping.meta.Processor;
 import org.spongepowered.configurate.objectmapping.meta.Processor.Factory;
 
-import com.google.inject.Inject;
-
-import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.config.LocalisedComment;
+import sawfowl.synapse.api.services.LocaleService;
 
 public class LocalisedCommentFactory implements Factory<LocalisedComment, Object> {
 
-	@Inject
-	private static Synapse synapse;
 	public static final LocalisedCommentFactory INSTANCE = new LocalisedCommentFactory();
 
 	@Override
@@ -24,8 +20,8 @@ public class LocalisedCommentFactory implements Factory<LocalisedComment, Object
 				if(node.comment() != null && !node.comment().isEmpty()) return;
 				if(data.plugin() == null || data.path() == null || data.path().length == 0) {
 					if(!data.def().isEmpty()) node.comment(data.def());
-				} else if(synapse.getLocaleService().localesExist(data.plugin()) && synapse.getLocaleService().getLocales(data.plugin()).getSimple(synapse.getLocaleService().getSystemOrDefaultLocale()).contains((Object[]) data.path())) {
-					if(node.comment() == null || node.comment().isEmpty()) node.comment(synapse.getLocaleService().getLocales(data.plugin()).getSimple(synapse.getLocaleService().getSystemOrDefaultLocale()).getString((Object[]) data.path()));
+				} else if(LocaleService.get().localesExist(data.plugin()) && LocaleService.get().getLocales(data.plugin()).getSimple(LocaleService.get().getSystemOrDefaultLocale()).contains((Object[]) data.path())) {
+					if(node.comment() == null || node.comment().isEmpty()) node.comment(LocaleService.get().getLocales(data.plugin()).getSimple(LocaleService.get().getSystemOrDefaultLocale()).getString((Object[]) data.path()));
 				} else if(!data.def().isEmpty()) node.comment(data.def());
 			}
 		};

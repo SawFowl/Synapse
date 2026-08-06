@@ -1,10 +1,10 @@
 package sawfowl.synapse.api.services;
 
-import java.util.List;
 import java.util.Locale;
 
 import com.velocitypowered.api.plugin.PluginContainer;
 
+import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.Translation;
 
@@ -13,22 +13,15 @@ import sawfowl.synapse.api.config.locale.Translation;
  */
 public interface LocaleService {
 
+	static LocaleService get() {
+		return Synapse.getLocaleService();
+	}
+
 	/*
 	 * Getting the system locale.<br>
 	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
 	 */
 	public abstract Locale getSystemOrDefaultLocale();
-
-	/**
-	 * List of all localizations of the game.
-	 * 
-	 */
-	public abstract List<Locale> getLocalesList();
-
-	/**
-	 * The default locale. Used in a localization map.
-	 */
-	public abstract Locale getDefaultLocale();
 
 	/**
 	 * 

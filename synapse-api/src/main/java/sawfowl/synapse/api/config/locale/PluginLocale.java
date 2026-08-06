@@ -5,7 +5,7 @@ import java.util.Locale;
 
 import net.kyori.adventure.text.Component;
 import sawfowl.synapse.api.config.Config;
-import sawfowl.synapse.api.config.text.Text;
+import sawfowl.synapse.api.text.Text;
 
 public interface PluginLocale extends Config {
 
