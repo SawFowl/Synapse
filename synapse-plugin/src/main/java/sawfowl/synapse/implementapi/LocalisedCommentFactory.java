@@ -7,7 +7,7 @@ import org.spongepowered.configurate.objectmapping.meta.Processor;
 import org.spongepowered.configurate.objectmapping.meta.Processor.Factory;
 
 import sawfowl.synapse.api.config.LocalisedComment;
-import sawfowl.synapse.api.services.LocaleService;
+import sawfowl.synapse.implementapi.services.ILocaleService;
 
 public class LocalisedCommentFactory implements Factory<LocalisedComment, Object> {
 
@@ -20,8 +20,8 @@ public class LocalisedCommentFactory implements Factory<LocalisedComment, Object
 				if(node.comment() != null && !node.comment().isEmpty()) return;
 				if(data.plugin() == null || data.path() == null || data.path().length == 0) {
 					if(!data.def().isEmpty()) node.comment(data.def());
-				} else if(LocaleService.get().localesExist(data.plugin()) && LocaleService.get().getLocales(data.plugin()).getSimple(LocaleService.get().getSystemOrDefaultLocale()).contains((Object[]) data.path())) {
-					if(node.comment() == null || node.comment().isEmpty()) node.comment(LocaleService.get().getLocales(data.plugin()).getSimple(LocaleService.get().getSystemOrDefaultLocale()).getString((Object[]) data.path()));
+				} else if(ILocaleService.getInstance().localesExist(data.plugin()) && ILocaleService.getInstance().getLocales(data.plugin()).getSimple(ILocaleService.getInstance().getSystemOrDefaultLocale()).contains((Object[]) data.path())) {
+					if(node.comment() == null || node.comment().isEmpty()) node.comment(ILocaleService.getInstance().getLocales(data.plugin()).getSimple(ILocaleService.getInstance().getSystemOrDefaultLocale()).getString((Object[]) data.path()));
 				} else if(!data.def().isEmpty()) node.comment(data.def());
 			}
 		};

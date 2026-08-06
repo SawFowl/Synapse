@@ -48,7 +48,7 @@ class Watcher {
 			watchService = FileSystems.getDefault().newWatchService();
 		} catch (IOException e) {
 			logger.error(e.getLocalizedMessage());
-		};
+		}
 	}
 
 	void pause() {

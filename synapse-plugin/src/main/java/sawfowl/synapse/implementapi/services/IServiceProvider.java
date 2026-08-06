@@ -6,11 +6,11 @@ import java.util.Optional;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CallbackSevice;
 import sawfowl.synapse.api.services.ConfigurationService;
 import sawfowl.synapse.api.services.LocaleService;
+import sawfowl.synapse.api.services.LoggerService;
 import sawfowl.synapse.api.services.PlaceholderService;
 import sawfowl.synapse.api.services.ServiceProvider;
 import sawfowl.synapse.implementapi.text.callback.ICallbackService;
@@ -18,12 +18,13 @@ import sawfowl.synapse.implementapi.text.callback.ICallbackService;
 public class IServiceProvider implements ServiceProvider {
 
 	private Map<Class<?>, Object> services = new HashMap<>();
-	public IServiceProvider(SynapsePlugin plugin, ProxyServer server) {
+	public IServiceProvider(ProxyServer server) {
 		register(ProxyServer.class, server);
+		register(LoggerService.class, new ILoggerService());
 		register(BuilderService.class, new IBuilderService());
 		register(CallbackSevice.class, new ICallbackService());
-		register(ConfigurationService.class, new IConfigurationService());
-		register(LocaleService.class, new ILocaleService(plugin));
+		register(LocaleService.class, ILocaleService.getInstance());
+		register(ConfigurationService.class, IConfigurationService.getInstance());
 		register(PlaceholderService.class, new IPlaceholderService());
 	}
 

@@ -39,15 +39,13 @@ import sawfowl.synapse.implementapi.config.builders.IVirtualConfigBuilder;
 
 public class IConfigurationService implements ConfigurationService {
 
-	private static IConfigurationService instance;
+	private static final IConfigurationService INSTANCE = new IConfigurationService();
 
 	public static IConfigurationService getInstance() {
-		return instance;
+		return INSTANCE;
 	}
 
-	public IConfigurationService() {
-		instance = this;
-	}
+	private IConfigurationService() {}
 
 	private final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addProcessor(LocalisedComment.class, LocalisedCommentFactory.INSTANCE).addNodeResolver(NodeResolver.onlyWithSetting()).build();
 	//private final TypeSerializerCollection LA_BASIC = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(SimpleDateFormat.class, SimpleDateFormatSerializer.INSTANCE).register(ConfigTypes.class, ConfigTypeSerializer.INSTANCE).register(JsonElement.class, JsonElementSerializer.INSTANCE).register(JsonObject.class, JsonObjectSerializer.INSTANCE).register(JsonArray.class, JsonArraySerializer.INSTANCE).register(JsonPrimitive.class, JsonPrimitiveSerializer.INSTANCE).build();
