@@ -5,6 +5,8 @@ plugins {
 version = "${major}.${minor}.${patch}-${suffix}"
 
 dependencies {
+	implementation project(":shading-configure")
+	implementation project(":shading-geyser")
 	implementation project(":synapse-api")
 	implementation 'com.velocitypowered:velocity-api:4.1.0-SNAPSHOT'
 	//compileOnly 'com.velocitypowered:velocity-proxy:4.0.0-SNAPSHOT'
@@ -27,16 +29,6 @@ dependencies {
 	implementation "aopalliance:aopalliance:1.0"
 	implementation 'io.netty:netty-all:4.1.114.Final'
 
-	shadow "org.spongepowered:configurate-core:${configurate}"
-	shadow "org.spongepowered:configurate-gson:${configurate}"
-	shadow "org.spongepowered:configurate-hocon:${configurate}"
-	shadow "org.spongepowered:configurate-jackson:${configurate}"
-	shadow "org.spongepowered:configurate-xml:${configurate}"
-	shadow "org.spongepowered:configurate-extra-dfu2:${configurate}"
-	shadow "org.spongepowered:configurate-extra-dfu3:${configurate}"
-	shadow "org.spongepowered:configurate-extra-dfu4:${configurate}"
-	shadow "org.spongepowered:configurate-extra-guice:${configurate}"
-	shadow "org.spongepowered:configurate-extra-kotlin:${configurate}"
 	shadow "net.kyori:adventure-serializer-configurate4:${adventure}"
 	shadow "org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT"
 	shadow "io.leangen.geantyref:geantyref:2.0.0"
@@ -46,23 +38,13 @@ dependencies {
 
 shadowJar {
 	dependencies {
-		//include(project(path: ':shading-geyser'))
-		include(dependency("org.spongepowered:configurate-core:${configurate}"))
-		include(dependency("org.spongepowered:configurate-gson:${configurate}"))
-		include(dependency("org.spongepowered:configurate-hocon:${configurate}"))
-		include(dependency("org.spongepowered:configurate-jackson:${configurate}"))
-		include(dependency("org.spongepowered:configurate-xml:${configurate}"))
-		//include(dependency("org.spongepowered:configurate-yaml:${configurate}"))
-		include(dependency("org.spongepowered:configurate-extra-dfu2:${configurate}"))
-		include(dependency("org.spongepowered:configurate-extra-dfu3:${configurate}"))
-		include(dependency("org.spongepowered:configurate-extra-dfu4:${configurate}"))
-		include(dependency("org.spongepowered:configurate-extra-guice:${configurate}"))
-		include(dependency("org.spongepowered:configurate-extra-kotlin:${configurate}"))
 		include(dependency("net.kyori:adventure-serializer-configurate4:${adventure}"))
 		include(dependency("org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT"))
 		include(dependency("io.leangen.geantyref:geantyref:2.0.0"))
 		include(dependency("jakarta.inject:jakarta.inject-api:2.0.1"))
 		include(dependency("aopalliance:aopalliance:1.0"))
+		include(project(path: ':shading-configure'))
+		include(project(path: ':shading-geyser'))
 		include(project(path: ':synapse-api'))
 	}
 	archiveFileName.set("Synapse-${version}.jar")

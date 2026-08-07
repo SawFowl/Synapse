@@ -1,0 +1,93 @@
+plugins {
+	id("com.gradleup.shadow") version "9.0.0-beta4"
+}
+
+dependencies {
+	implementation "org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT"
+}
+
+shadowJar {
+	relocate('org.spongepowered.configurate', 'libs.synapse.geysermc') {
+		include 'org.spongepowered.configurate.CommentedConfigurationNode.class'
+		exclude 'org.spongepowered.configurate.ConfigurationLoader.class'
+		exclude 'org.spongepowered.configurate.ConfigurationLoader*'
+	}
+	
+	relocate('org.spongepowered.configurate.yaml', 'libs.synapse.geysermc.yaml') {
+		include 'org.spongepowered.configurate.yaml.**'
+	}
+	
+	relocate('org.spongepowered.configurate.loader', 'libs.synapse.geysermc.loader') {
+		include 'org.spongepowered.configurate.loader.**'
+		exclude 'org.spongepowered.configurate.loader.ConfigurationLoader.class'
+		exclude 'org.spongepowered.configurate.loader.ConfigurationLoader*'
+	}
+
+	exclude 'org/spongepowered/configurate/objectmapping/**'
+	exclude 'org/spongepowered/configurate/reactive/**'
+	exclude 'org/spongepowered/configurate/reference/**'
+	exclude 'org/spongepowered/configurate/serialize/**'
+	exclude 'org/spongepowered/configurate/transformation/**'
+	exclude 'org/spongepowered/configurate/util/**'
+	exclude 'org/spongepowered/configurate/*.class'
+	exclude 'io/**'
+	exclude '**/package-info.class'
+
+	mergeServiceFiles()
+
+	exclude 'META-INF/maven/**'
+	exclude 'META-INF/*.SF'
+	exclude 'META-INF/*.DSA'
+	exclude 'META-INF/*.RSA'
+	archiveClassifier.set('')
+}
+
+eclipse {
+	classpath {
+		file {
+			whenMerged { classpath ->
+				classpath.entries.removeAll { entry ->
+					entry.path.contains('jar') && entry.kind == 'lib'
+				}
+
+				def shadowJarEntry = new org.gradle.plugins.ide.eclipse.model.Library(
+					fileReference(tasks.shadowJar.archiveFile.get().asFile)
+				)
+				shadowJarEntry.exported = true
+				classpath.entries.add(shadowJarEntry)
+			}
+		}
+	}
+}
+
+tasks.withType(Jar).configureEach {
+	if (it.name == 'jar') {
+		it.enabled = false
+	}
+}
+
+tasks.named('shadowJar') {
+	archiveClassifier.set('')
+}
+
+artifacts {
+	archives shadowJar
+	add('default', shadowJar)
+}
+
+configurations {
+	shadowedImplementation
+}
+
+tasks.named('build') {
+	dependsOn shadowJar
+}
+
+configurations {
+	apiElements {
+		outgoing.artifact(shadowJar)
+	}
+	runtimeElements {
+		outgoing.artifact(shadowJar)
+	}
+}

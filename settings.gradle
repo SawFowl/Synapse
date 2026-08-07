@@ -66,6 +66,8 @@ plugins {
 rootProject.name = 'Synapse'
 
 include(
+		'shading-configure',
+		'shading-geyser',
 		'synapse-api',
 		'synapse-plugin'
 )

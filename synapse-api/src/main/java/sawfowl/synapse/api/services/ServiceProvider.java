@@ -1,6 +1,7 @@
 package sawfowl.synapse.api.services;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface ServiceProvider {
 
@@ -11,5 +12,7 @@ public interface ServiceProvider {
 	<S> Optional<S> find(Class<S> serviceClass);
 
 	<S> S get(Class<S> serviceClass);
+
+	<S> void registerPendingListener(Class<S> serviceClass, Consumer<S> consumer);
 
 }
