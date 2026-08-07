@@ -13,7 +13,7 @@ public class ConfigSettings {
 
 	@Setting("ConfigType")
 	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "ConfigType"})
-	private ConfigTypes type = ConfigTypes.HOCON;
+	private ConfigTypes type = ConfigTypes.GEYSER_YAML;
 	@Setting("ForcedUse")
 	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "ForcedUse"})
 	private boolean forcedUse = false;

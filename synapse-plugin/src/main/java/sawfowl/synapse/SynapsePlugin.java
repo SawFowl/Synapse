@@ -2,7 +2,9 @@ package sawfowl.synapse;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -27,6 +29,7 @@ import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
 import sawfowl.synapse.implementapi.ISynapse;
 import sawfowl.synapse.implementapi.InjectorAPI;
+import sawfowl.synapse.implementapi.config.locale.ILocalesList;
 import sawfowl.synapse.implementapi.services.IConfigurationService;
 import sawfowl.synapse.implementapi.services.ILocaleService;
 import sawfowl.synapse.implementapi.services.ILoggerService;
@@ -39,7 +42,7 @@ public class SynapsePlugin {
 	private static ReferencedConfig<Config> config;
 	private static Path configDir;
 	private static PluginContainer container;
-	private static LocalesList<LocaleConfig> locales;
+	private static ILocalesList<LocaleConfig> locales;
 	private static Logger logger;
 
 	@Inject
@@ -83,14 +86,25 @@ public class SynapsePlugin {
 			}
 		}
 		mainConfig = null;
-		locales = ILocaleService.getInstance().createLocales(container, LocaleConfig.class);
-		if(!locales.contains(Locales.DEFAULT)) locales.createReferencedTranslation(ConfigTypes.HOCON, Locales.DEFAULT, LocaleConfig.class);
-		if(!locales.contains(Locales.RU_RU)) locales.createReferencedTranslation(ConfigTypes.HOCON, Locales.RU_RU, LocaleConfig.createRu());
-		if(config == null) config = IConfigurationService.getInstance()
+		locales = (ILocalesList<LocaleConfig>) ILocaleService.getInstance().createLocales(container, LocaleConfig.class);
+		if(!locales.contains(Locales.DEFAULT)) locales.createReferencedTranslation(config == null ? ConfigTypes.GEYSER_YAML : getConfig().getLocalesSettings(container).getType(), Locales.DEFAULT, LocaleConfig.class);
+		if(!locales.contains(Locales.RU_RU)) locales.createReferencedTranslation(config == null ? ConfigTypes.GEYSER_YAML : getConfig().getLocalesSettings(container).getType(), Locales.RU_RU, LocaleConfig.createRu());
+		if(config != null) {
+			List<Locale> locales = new ArrayList<>();
+			SynapsePlugin.locales.forEach(locale -> {
+				if(getConfig().getLocalesSettings(container).getType() != locale.getType()) locales.add(locale.getLocale());
+			});
+			locales.forEach(locale -> {
+				var config = SynapsePlugin.locales.getAsReferenced(locale);
+				SynapsePlugin.locales.getSimple(locale).getPath().toFile().delete();
+				if(SynapsePlugin.locales.contains(locale)) SynapsePlugin.locales.remove(locale);
+				SynapsePlugin.locales.createReferencedTranslation(getConfig().getLocalesSettings(container).getType(), locale, config);
+			});
+		} else config = IConfigurationService.getInstance()
 				.createReferencedConfig(container, Config.class)
 				.setPath(dataDirectory)
 				.setName("Config")
-				.setType(ConfigTypes.HOCON)
+				.setType(ConfigTypes.GEYSER_YAML)
 				.build();
 		if(getConfig().getLocalesSettings(container).isForcedUse()) {
 			@SuppressWarnings("unchecked")
