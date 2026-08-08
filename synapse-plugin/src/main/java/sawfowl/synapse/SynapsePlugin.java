@@ -133,7 +133,9 @@ public class SynapsePlugin {
 		((ICommandService) Synapse.getCommandService()).registerDefaultBuilders();
 		/*SynapseBrigadierCommand.builder("test", container)
 		.setArguments(
-			Argument.createString("TestStringArg", "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
+			Argument.createString("TestStringArg", true, "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
+			Argument.createString("Test2StringArg", false, "2Variant1", "2Variant2", "2Variant3", "2Variant4", "2Variant5"),
+			Argument.createString("Test3StringArg", false, "3Variant1", "3Variant2", "3Variant3", "3Variant4", "3Variant5"),
 			Argument.createIntRange("TestIntArg", 0, 5)
 		)
 		.setAliases("testalias1", "testalias2", "testalias3")
@@ -141,14 +143,14 @@ public class SynapsePlugin {
 			SynapseBrigadierCommand
 			.builder("child", container)
 			.setArguments(
-				Argument.createString("TestStringArg", "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
+				Argument.createString("TestStringArg", false, "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
 				Argument.createIntRange("TestIntArg", 0, 5)
 			)
 			.setExecutor((command, context) -> {
 				context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
 				context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
 				context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
-				return 1;
+				return command.success();
 			})
 			.build()
 		)
@@ -156,7 +158,9 @@ public class SynapsePlugin {
 			context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
 			context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
 			context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
-			return 1;
+			context.getSource().sendPlainMessage("Введенный аргумент Test2StringArg -> " + command.<String>getArgument(context, "Test2StringArg").orElse("Ничего не введено"));
+			context.getSource().sendPlainMessage("Введенный аргумент Test3StringArg -> " + command.<String>getArgument(context, "Test3StringArg").orElse("Ничего не введено"));
+			return command.success();
 		})
 		.build().register();*/
 	}

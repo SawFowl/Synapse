@@ -25,7 +25,6 @@ import sawfowl.synapse.api.commands.arguments.BrigadierArgumentsCollection;
 import sawfowl.synapse.api.exceptions.CommandException;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CallbackSevice;
-import sawfowl.synapse.api.services.CommandService;
 import sawfowl.synapse.api.text.callback.Callback;
 
 public interface SynapseBrigadierCommand {
@@ -64,25 +63,14 @@ public interface SynapseBrigadierCommand {
 		return getArgument(context, key);
 	}
 
+	default int success() {
+		return Command.SINGLE_SUCCESS;
+	}
 
 	@FunctionalInterface
-	interface ParameterizedExecutor extends Command<CommandSource> {
+	interface ParameterizedExecutor {
 
 		int execute(SynapseBrigadierCommand command,  CommandContext<CommandSource> context) throws CommandException;
-
-		@Override
-		default int run(CommandContext<CommandSource> context) throws CommandException {
-			return execute(
-				CommandService.get().getCommand(
-					context.getInput().split(" ")[0]).orElseThrow(
-					() -> new RuntimeException("There was a problem with receiving the data from the asdsa command. Contact the Synapse developer and show this output in the console.")),
-				context
-			);
-		}
-
-		default int success() {
-			return Command.SINGLE_SUCCESS;
-		}
 
 		default Component withCallback(Component original, Consumer<CommandSource> consumer) {
 			return original.clickEvent(callback(consumer));

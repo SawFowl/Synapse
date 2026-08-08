@@ -3,6 +3,7 @@ package sawfowl.synapse.api.commands.arguments;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -46,7 +47,7 @@ public interface Argument<T> {
 		return Argument.<Double>builder().setName(name).setType(DoubleArgumentType.doubleArg(min, max)).setArgumentParser(arg -> cast(arg.getResult())).build();
 	}
 
-	static Argument<String> createString(String name, String... variants) {
+	static Argument<String> createString(String name, boolean optional, String... variants) {
 		return Argument.<String>builder()
 			.setName(name)
 			.setSuggestionProvider(
@@ -56,6 +57,8 @@ public interface Argument<T> {
 				}
 			)
 			.setArgumentParser(arg -> Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
+			.setOptional(optional)
+			.setVariants(() -> variants)
 			.build();
 	}
 
@@ -75,6 +78,8 @@ public interface Argument<T> {
 
 	<E extends T> Optional<E> parse(CommandContext<CommandSource> context);
 
+	boolean isOprional();
+
 	interface Builder<T> extends AbstractBuilder<Argument<T>> {
 
 		Builder<T> setName(String name);
@@ -89,6 +94,10 @@ public interface Argument<T> {
 		 * default {@link StringArgumentType#word}
 		 */
 		Builder<T> setType(ArgumentType<T> type);
+
+		Builder<T> setOptional(boolean value);
+
+		Builder<T> setVariants(Supplier<T[]> variants);
 
 	}
 

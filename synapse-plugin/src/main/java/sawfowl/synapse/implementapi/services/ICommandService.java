@@ -76,7 +76,6 @@ public class ICommandService implements CommandService {
 				"Boolean",
 				Argument.<Boolean>builder()
 					.setName("Boolean")
-					.setRequirement(_ -> true)
 					.setSuggestionProvider((_, builder) -> {
 						builder.suggest("true");
 						builder.suggest("false");

@@ -3,6 +3,7 @@ package sawfowl.synapse.implementapi.command.argument;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -39,6 +40,8 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private Predicate<S> requirement;
 	private SuggestionProvider<S> suggestionsProvider;
 	private ArgumentParser<S, T> parser;
+	private boolean optional = false;
+	private Supplier<T[]> variants;
 	private GenericArgumentBuilder(String name, ArgumentType<T> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser) {
 		this.name = name;
 		this.type = type;
@@ -63,12 +66,10 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 	@Override
 	public CommandNode<S> build() {
-		final ArgumentCommandNode<S, ?> result = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), (SuggestionProvider<S>) suggestionsProvider);
-
+		final ArgumentCommandNode<S, ?> result = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider);
 		for (final CommandNode<S> argument : getArguments()) {
 			result.addChild(argument);
 		}
-
 		return result;
 	}
 
@@ -97,6 +98,15 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 	private Builder<T> createBuilder() {
 		return new IBuilder();
+	}
+
+	@Override
+	public boolean isOprional() {
+		return optional;
+	}
+
+	public T[] getVariants() {
+		return variants != null ? variants.get() : null;
 	}
 
 	private class IBuilder implements Builder<T> {
@@ -141,6 +151,18 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		public Builder<T> setType(ArgumentType<T> type) {
 			Objects.requireNonNull(type);
 			GenericArgumentBuilder.this.type = type;
+			return this;
+		}
+
+		@Override
+		public Builder<T> setOptional(boolean value) {
+			optional = value;
+			return this;
+		}
+
+		@Override
+		public Builder<T> setVariants(Supplier<T[]> variants) {
+			GenericArgumentBuilder.this.variants = variants;
 			return this;
 		}
 

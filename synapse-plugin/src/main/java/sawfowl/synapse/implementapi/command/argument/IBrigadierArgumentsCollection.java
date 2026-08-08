@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.CommandSource;
 
@@ -30,6 +32,11 @@ public class IBrigadierArgumentsCollection<S extends CommandSource> implements B
 	@Override
 	public Argument<?>[] getArguments() {
 		return arguments;
+	}
+
+	@Override
+	public @Nullable Argument<?> getArgument(String key) {
+		return args.containsKey(key) ? args.get(key) : null;
 	}
 
 	private void addArg(Argument<?> arg) {
