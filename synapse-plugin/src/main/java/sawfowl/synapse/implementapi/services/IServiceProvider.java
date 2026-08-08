@@ -11,6 +11,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CallbackSevice;
+import sawfowl.synapse.api.services.CommandService;
 import sawfowl.synapse.api.services.ConfigurationService;
 import sawfowl.synapse.api.services.LocaleService;
 import sawfowl.synapse.api.services.LoggerService;
@@ -39,6 +40,7 @@ public class IServiceProvider implements ServiceProvider {
 		register(LocaleService.class, ILocaleService.getInstance());
 		register(ConfigurationService.class, IConfigurationService.getInstance());
 		register(PlaceholderService.class, new IPlaceholderService());
+		register(CommandService.class, new ICommandService());
 	}
 
 	@Override

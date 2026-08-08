@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
 import sawfowl.synapse.api.Locales;
@@ -140,6 +141,10 @@ public interface LocalesList<@Nullable T extends Translation> {
 	 */
 	default Locale getSystemOrDefaultLocale() {
 		return LocaleService.get().getSystemOrDefaultLocale();
+	}
+
+	default T getAsReferenced(CommandSource source) {
+		return getAsReferenced(source instanceof Player player ? player.getEffectiveLocale() : getSystemOrDefaultLocale());
 	}
 
 }

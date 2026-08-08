@@ -5,6 +5,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CallbackSevice;
+import sawfowl.synapse.api.services.CommandService;
 import sawfowl.synapse.api.services.ConfigurationService;
 import sawfowl.synapse.api.services.LocaleService;
 import sawfowl.synapse.api.services.PlaceholderService;
@@ -25,6 +26,10 @@ public abstract class Synapse {
 
 	public static CallbackSevice getCallbackSevice() {
 		return getInstance().getServiceProvider().get(CallbackSevice.class);
+	}
+
+	public static CommandService getCommandService() {
+		return getInstance().getServiceProvider().get(CommandService.class);
 	}
 
 	public static BuilderService getBuilderService() {

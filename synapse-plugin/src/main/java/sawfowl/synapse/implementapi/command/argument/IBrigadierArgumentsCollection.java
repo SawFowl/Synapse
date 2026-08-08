@@ -1,0 +1,40 @@
+package sawfowl.synapse.implementapi.command.argument;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import com.mojang.brigadier.context.CommandContext;
+import com.velocitypowered.api.command.CommandSource;
+
+import sawfowl.synapse.api.commands.arguments.Argument;
+import sawfowl.synapse.api.commands.arguments.BrigadierArgumentsCollection;
+
+public class IBrigadierArgumentsCollection<S extends CommandSource> implements BrigadierArgumentsCollection<S> {
+
+	private Map<String, Argument<?>> args = new HashMap<String, Argument<?>>();
+	private Argument<?>[] arguments = {};
+	public IBrigadierArgumentsCollection(Argument<?>... arguments) {
+		if(arguments != null) {
+			this.arguments = arguments;
+			for(Argument<?> arg : arguments) addArg(arg);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> Optional<T> parse(String key, CommandContext<CommandSource> context) {
+		return args.containsKey(key) ? (Optional<T>) args.get(key).parse(context) : Optional.empty();
+	}
+
+	@Override
+	public Argument<?>[] getArguments() {
+		return arguments;
+	}
+
+	private void addArg(Argument<?> arg) {
+		if(args.containsKey(arg.getName())) throw new RuntimeException("");
+		args.put(arg.getName(), arg);
+	}
+
+}

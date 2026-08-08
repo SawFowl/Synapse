@@ -10,6 +10,7 @@ import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import com.google.inject.Inject;
+
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPreShutdownEvent;
@@ -21,6 +22,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import sawfowl.synapse.api.Locales;
 import sawfowl.synapse.api.Logger;
+import sawfowl.synapse.api.Synapse;
+import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
+import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
@@ -30,6 +34,7 @@ import sawfowl.synapse.configure.localization.LocaleConfig;
 import sawfowl.synapse.implementapi.ISynapse;
 import sawfowl.synapse.implementapi.InjectorAPI;
 import sawfowl.synapse.implementapi.config.locale.ILocalesList;
+import sawfowl.synapse.implementapi.services.ICommandService;
 import sawfowl.synapse.implementapi.services.IConfigurationService;
 import sawfowl.synapse.implementapi.services.ILocaleService;
 import sawfowl.synapse.implementapi.services.ILoggerService;
@@ -125,6 +130,35 @@ public class SynapsePlugin {
 			copy = null;
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
+		((ICommandService) Synapse.getCommandService()).registerDefaultBuilders();
+		/*SynapseBrigadierCommand.builder("test", container)
+		.setArguments(
+			Argument.createString("TestStringArg", "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
+			Argument.createIntRange("TestIntArg", 0, 5)
+		)
+		.setAliases("testalias1", "testalias2", "testalias3")
+		.setChilds(
+			SynapseBrigadierCommand
+			.builder("child", container)
+			.setArguments(
+				Argument.createString("TestStringArg", "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
+				Argument.createIntRange("TestIntArg", 0, 5)
+			)
+			.setExecutor((command, context) -> {
+				context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
+				context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
+				context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
+				return 1;
+			})
+			.build()
+		)
+		.setExecutor((command, context) -> {
+			context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
+			context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
+			context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
+			return 1;
+		})
+		.build().register();*/
 	}
 
 	@Subscribe

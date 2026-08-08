@@ -6,21 +6,29 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import net.kyori.adventure.builder.AbstractBuilder;
+
 import sawfowl.synapse.api.ResourceKey;
+import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
+import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.text.Text;
 import sawfowl.synapse.api.text.callback.Pagination;
 import sawfowl.synapse.implementapi.IResourceKey;
+import sawfowl.synapse.implementapi.command.IBrigadierCommand;
+import sawfowl.synapse.implementapi.command.argument.GenericArgumentBuilder;
 import sawfowl.synapse.implementapi.text.IText;
 import sawfowl.synapse.implementapi.text.callback.IPagination;
 
 public class IBuilderService implements BuilderService {
 
 	private Map<Class<?>, Supplier<?>> builders = new HashMap<>();
+	@SuppressWarnings("unchecked")
 	public IBuilderService() {
 		add(Text.Builder.class, () -> IText.builder());
 		add(Pagination.Builder.class, () -> IPagination.builder());
 		add(ResourceKey.Builder.class, () -> IResourceKey.builder());
+		add(Argument.Builder.class, () -> GenericArgumentBuilder.builder());
+		add(SynapseBrigadierCommand.Builder.class, () -> IBrigadierCommand.builder());
 	}
 
 	@Override
