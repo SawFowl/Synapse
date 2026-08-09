@@ -1,6 +1,5 @@
-package sawfowl.synapse.api.text;
+package sawfowl.synapse.api.utils;
 
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -11,6 +10,8 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+
+import sawfowl.synapse.api.text.Text;
 import sawfowl.synapse.api.text.callback.Callback;
 
 public class TextUtils {
@@ -123,7 +124,7 @@ public class TextUtils {
 	/**
 	 * Time formatting.
 	 */
-	public static Component timeFormat(long timeSecond, Locale locale, Component day, Component hour, Component minute, Component second) {
+	public static Component timeFormat(long timeSecond, Component day, Component hour, Component minute, Component second) {
 		long timeMinute = TimeUnit.SECONDS.toMinutes(timeSecond);
 		long timeHour = TimeUnit.SECONDS.toHours(timeSecond);
 		long timeDays = TimeUnit.SECONDS.toDays(timeSecond);

@@ -12,6 +12,7 @@ import sawfowl.synapse.api.config.ConfigTypes;
 @ConfigSerializable
 public class LoggerMessages {
 
+	private static final String COMMAND = "%command%'";
 	public static LoggerMessages createRu() {
 		LoggerMessages loggerMessages = new LoggerMessages();
 		loggerMessages.startWatch = "Запущено отслеживание файлов локализаций.";
@@ -19,6 +20,7 @@ public class LoggerMessages {
 		loggerMessages.add = "Добавлен новый файл локализации \"%file%\" для плагина \"%plugin%\"! Загрузка...";
 		loggerMessages.reload = "Файл локализации \"%file%\" для плагина \"%plugin%\" был изменен! Перезагрузка...";
 		loggerMessages.saveAsset = "Был сохранен конфиг локализации \"%file%\" для плагина \"%plugin%\".";
+		loggerMessages.executorNotAssigned = "Для команды '/%command%' не назначен исполнитель или дочерние команды.";
 		return loggerMessages;
 	}
 
@@ -34,6 +36,8 @@ public class LoggerMessages {
 	private String reload = "Locale file \"%file%\" for plugin \"%plugin%\" has been changed! Reloading...";
 	@Setting("SaveAsset")
 	private String saveAsset = "Locale config \"%file%\" for plugin \"%plugin%\" has been saved.";
+	@Setting("ExecutorNotAssigned")
+	private String executorNotAssigned = "An executor or subcommands have not been assigned to the '/%command%' command.";
 
 	public String getStartWatch() {
 		return startWatch;
@@ -53,6 +57,10 @@ public class LoggerMessages {
 
 	public String getSaveAsset(Locale locale, ConfigTypes type, String plugin) {
 		return saveAsset.replace("%file%", locale.toLanguageTag() + type.toString()).replace("%plugin%", plugin);
+	}
+
+	public String getExecutorNotAssigned(String command) {
+		return executorNotAssigned.replace(COMMAND, command);
 	}
 
 }

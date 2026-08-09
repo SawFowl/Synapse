@@ -5,12 +5,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.velocitypowered.api.command.VelocityBrigadierMessage;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.util.ComponentMessageThrowable;
-
-import sawfowl.synapse.api.text.TextUtils;
+import sawfowl.synapse.api.utils.TextUtils;
 
 /**
  * Thrown when an executed command raises an error or when execution of
@@ -23,9 +23,14 @@ public class CommandException extends CommandSyntaxException implements Componen
 		this.message = message == null ? Component.empty() : TextUtils.deserialize(message.getString());
 	}
 
+	public CommandException(Component message) {
+		this(VelocityBrigadierMessage.tooltip(message));
+		this.message = message;
+	}
+
 	private static final long serialVersionUID = 4626722485860074825L;
 
-	@Nullable private final Component message;
+	@Nullable private Component message;
 
 	@Override
 	public @Nullable String getMessage() {

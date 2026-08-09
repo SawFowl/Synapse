@@ -12,7 +12,7 @@ import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.services.PlaceholderService;
 import sawfowl.synapse.api.text.Placeholder;
 import sawfowl.synapse.api.text.Text;
-import sawfowl.synapse.api.text.TextUtils;
+import sawfowl.synapse.api.utils.TextUtils;
 
 public class IPlaceholderService implements PlaceholderService {
 

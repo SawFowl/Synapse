@@ -10,7 +10,7 @@ public class IResourceKey implements ResourceKey {
 		return new IResourceKey().createBuilder();
 	}
 
-	private String namespace, id;
+	private String namespace = "unknown", id = "unknown";
 
 	private Builder createBuilder() {
 		return new IBuilder();
@@ -39,12 +39,18 @@ public class IResourceKey implements ResourceKey {
 	@Override
 	public boolean equals(Object obj) {
 		if(this == obj) return true;
-		if(obj == null || getClass() != obj.getClass()) return false;
-		return equalsTo((IResourceKey) obj);
+		if(obj == null) return false;
+		if(obj instanceof ResourceKey other) return equalsTo(other);
+		return equalsTo(obj.toString());
 	}
 
-	private boolean equalsTo(IResourceKey other) {
-		return Objects.equals(id, other.id) && Objects.equals(namespace, other.namespace);
+	private boolean equalsTo(ResourceKey other) {
+		return Objects.equals(id, other.getId()) && Objects.equals(namespace, other.getNamespace());
+	}
+
+	private boolean equalsTo(String string) {
+		if(string.contains("\"")) string = string.replace("\"", "");
+		return Objects.equals(string, asString());
 	}
 
 	class IBuilder implements Builder {
@@ -66,15 +72,28 @@ public class IResourceKey implements ResourceKey {
 		@Override
 		public ResourceKey tryParse(String string) throws RuntimeException {
 			Objects.requireNonNull(string);
-			if(!string.contains(":")) throw new RuntimeException("The string '" + string + "' does not contain the character ':'.");
+			if(string.contains("\"")) string = string.replace("\"", "");
+			if(!string.contains(":")) return IResourceKey.this;
 			var split = string.split(":");
-			if(split.length < 2 || split[0].length() == 0 || split[1].length() == 0 || split[1].contains(":")) throw new RuntimeException("It is impossible to parse string '" + string + "' correctly. The character ':' must not be the first or last character. It is also unacceptable to have multiple characters ':'");
-			namespace = split[0];
-			id = split[1];
-			split = null;
-			return IResourceKey.this;
+			switch (split.length) {
+				case 0: {
+					split = null;
+					return IResourceKey.this;
+				}
+				case 1: {
+					namespace = split[0];
+					split = null;
+					return IResourceKey.this;
+				}
+				default: {
+					namespace = split[0];
+					id = split[1];
+					split = null;
+					return IResourceKey.this;
+				}
+			}
 		}
-		
+
 	}
 
 }

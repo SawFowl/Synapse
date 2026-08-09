@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import sawfowl.synapse.api.text.Text;
-import sawfowl.synapse.api.text.TextUtils;
+import sawfowl.synapse.api.utils.TextUtils;
 
 /** * 
  * @apiNote Most terminals would work with this, some terminals won't

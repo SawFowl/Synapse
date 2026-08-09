@@ -12,8 +12,8 @@ import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import sawfowl.synapse.api.text.Text;
-import sawfowl.synapse.api.text.TextUtils;
 import sawfowl.synapse.api.text.callback.Callback;
+import sawfowl.synapse.api.utils.TextUtils;
 
 public class IText implements Text {
 

@@ -1,4 +1,4 @@
-package sawfowl.synapse.api.exceptions;
+package sawfowl.synapse.api.utils;
 
 import java.util.function.Consumer;
 

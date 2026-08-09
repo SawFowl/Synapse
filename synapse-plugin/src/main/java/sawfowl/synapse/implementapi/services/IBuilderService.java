@@ -10,12 +10,16 @@ import net.kyori.adventure.builder.AbstractBuilder;
 import sawfowl.synapse.api.ResourceKey;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
+import sawfowl.synapse.api.commands.settings.CommandPrice;
+import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.text.Text;
 import sawfowl.synapse.api.text.callback.Pagination;
 import sawfowl.synapse.implementapi.IResourceKey;
 import sawfowl.synapse.implementapi.command.IBrigadierCommand;
 import sawfowl.synapse.implementapi.command.argument.GenericArgumentBuilder;
+import sawfowl.synapse.implementapi.command.settings.ICommandPrice;
+import sawfowl.synapse.implementapi.command.settings.ICommandSettings;
 import sawfowl.synapse.implementapi.text.IText;
 import sawfowl.synapse.implementapi.text.callback.IPagination;
 
@@ -29,6 +33,8 @@ public class IBuilderService implements BuilderService {
 		add(ResourceKey.Builder.class, () -> IResourceKey.builder());
 		add(Argument.Builder.class, () -> GenericArgumentBuilder.builder());
 		add(SynapseBrigadierCommand.Builder.class, () -> IBrigadierCommand.builder());
+		add(CommandPrice.Builder.class, () -> ICommandPrice.builder());
+		add(CommandSettings.Builder.class, () -> ICommandSettings.builder());
 	}
 
 	@Override

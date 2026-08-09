@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -18,13 +19,16 @@ import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import sawfowl.synapse.api.Locales;
 import sawfowl.synapse.api.Logger;
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
+import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
@@ -130,26 +134,32 @@ public class SynapsePlugin {
 			copy = null;
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
-		((ICommandService) Synapse.getCommandService()).registerDefaultBuilders();
-		/*SynapseBrigadierCommand.builder("test", container)
+		SynapseBrigadierCommand.builder("test", container)
 		.setArguments(
-			Argument.createString("TestStringArg", true, "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
-			Argument.createString("Test2StringArg", false, "2Variant1", "2Variant2", "2Variant3", "2Variant4", "2Variant5"),
-			Argument.createString("Test3StringArg", false, "3Variant1", "3Variant2", "3Variant3", "3Variant4", "3Variant5"),
-			Argument.createIntRange("TestIntArg", 0, 5)
+			Argument.OPTIONAL_PLAYER,
+			Argument.OPTIONAL_SERVER,
+			Argument.createString("TestStringArg", false, "Variant1", "Variant2", "Variant3", "Variant4", "OtherVariant"),
+			Argument.createIntRange("TestIntArg", false, 0, 5)
 		)
 		.setAliases("testalias1", "testalias2", "testalias3")
+		.setSettings(
+			CommandSettings
+			.builder()
+			.setCooldown(5)
+			.build()
+		)
 		.setChilds(
 			SynapseBrigadierCommand
 			.builder("child", container)
+			.setAliases("alias")
 			.setArguments(
-				Argument.createString("TestStringArg", false, "Variant1", "Variant2", "Variant3", "Variant4", "Variant5"),
-				Argument.createIntRange("TestIntArg", 0, 5)
+				Argument.createString("TestStringArg", true, "Variant1", "Variant2", "Variant3", "Variant4", "OtherVariant"),
+				Argument.createBoolean("TestBoolArg", false)
 			)
 			.setExecutor((command, context) -> {
 				context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
 				context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
-				context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
+				context.getSource().sendPlainMessage("Введенный аргумент TestBoolArg -> " + command.<Boolean>getArgument(context, "TestBoolArg").map(i -> i.toString()).orElse("Ничего не введено"));
 				return command.success();
 			})
 			.build()
@@ -157,18 +167,21 @@ public class SynapsePlugin {
 		.setExecutor((command, context) -> {
 			context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
 			context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
+			context.getSource().sendPlainMessage("Введенный аргумент Player -> " + command.<Player>getArgument(context, "Player").map(Player::getUsername).orElse("Ничего не введено"));
+			context.getSource().sendPlainMessage("Введенный аргумент Server -> " + command.<RegisteredServer>getArgument(context, "Server").map(s -> s.getServerInfo().getName()).orElse("Ничего не введено"));
 			context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
-			context.getSource().sendPlainMessage("Введенный аргумент Test2StringArg -> " + command.<String>getArgument(context, "Test2StringArg").orElse("Ничего не введено"));
-			context.getSource().sendPlainMessage("Введенный аргумент Test3StringArg -> " + command.<String>getArgument(context, "Test3StringArg").orElse("Ничего не введено"));
 			return command.success();
 		})
-		.build().register();*/
+		.build().register();
 	}
 
 	@Subscribe
 	public void onStarted(ProxyInitializeEvent event) {
 		WatchRunner.getInstance().enable();
 		WatchRunner.getInstance().run();
+		Synapse.getProxy().getScheduler().buildTask(this, () -> 
+			ICommandService.getInstance().clearLastUsage()
+		).delay(1, TimeUnit.SECONDS).repeat(5, TimeUnit.SECONDS).schedule();
 	}
 
 	@Subscribe

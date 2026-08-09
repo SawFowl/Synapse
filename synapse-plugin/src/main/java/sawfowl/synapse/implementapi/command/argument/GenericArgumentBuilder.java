@@ -3,7 +3,6 @@ package sawfowl.synapse.implementapi.command.argument;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -12,12 +11,16 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
 import com.velocitypowered.api.command.CommandSource;
 
+import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.commands.arguments.ArgumentParser;
+import sawfowl.synapse.api.commands.arguments.ArgumentSupplier;
+import sawfowl.synapse.api.commands.arguments.UsageSupplier;
 
 public class GenericArgumentBuilder<S extends CommandSource, A extends GenericArgumentBuilder<S, A, T>, T> extends ArgumentBuilder<S, A> implements Argument<T> {
 
@@ -35,14 +38,15 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	}
 
 	private String name;
-	private ArgumentType<T> type;
+	private ArgumentType<?> type;
 	private Command<S> command;
 	private Predicate<S> requirement;
 	private SuggestionProvider<S> suggestionsProvider;
 	private ArgumentParser<S, T> parser;
 	private boolean optional = false;
-	private Supplier<T[]> variants;
-	private GenericArgumentBuilder(String name, ArgumentType<T> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser) {
+	private ArgumentSupplier variants;
+	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getDefaultNotPresent();
+	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser) {
 		this.name = name;
 		this.type = type;
 		this.requirement = requirement;
@@ -66,10 +70,8 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 	@Override
 	public CommandNode<S> build() {
-		final ArgumentCommandNode<S, ?> result = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider);
-		for (final CommandNode<S> argument : getArguments()) {
-			result.addChild(argument);
-		}
+		var result = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider);
+		for(final CommandNode<S> argument : getArguments()) result.addChild(argument);
 		return result;
 	}
 
@@ -101,12 +103,47 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	}
 
 	@Override
-	public boolean isOprional() {
+	public boolean isOptional() {
 		return optional;
 	}
 
-	public T[] getVariants() {
-		return variants != null ? variants.get() : null;
+	public Argument<?> setOptional() {
+		optional = true;
+		return this;
+	}
+
+	public String[] getVariants(CommandContext<CommandSource> context) {
+		return variants != null ? variants.get(context) : null;
+	}
+
+	public boolean isAllowed(CommandContext<CommandSource> context, String input) {
+		return variants == null || testVariant(variants.get(context), input);
+	}
+
+	public UsageSupplier getUsage() {
+		return usage;
+	}
+
+	private boolean testVariant(String[] variants, String input) {
+		for(String var : variants) if(var.equals(input)) return true;
+		return false;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void setSuggestionProvider() {
+		if(variants != null) {
+			suggestionsProvider = (context, builder) -> {
+				if(variants != null) for(String s : variants.get((CommandContext<CommandSource>) context)) suggest(context, builder, context.getInput().substring(context.getInput().lastIndexOf(" ")).replaceFirst(" ", ""), s);
+				return builder.buildFuture();
+			};
+		}
+		
+	}
+
+	private void suggest(final CommandContext<S> context, final SuggestionsBuilder builder, String input, String variant) {
+		if(input.isEmpty()) {
+			builder.suggest(variant);
+		} else if(variant.contains(input)) builder.suggest(variant);
 	}
 
 	private class IBuilder implements Builder<T> {
@@ -133,14 +170,6 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public Builder<T> setSuggestionProvider(SuggestionProvider<CommandSource> suggestionsProvider) {
-			Objects.requireNonNull(suggestionsProvider);
-			GenericArgumentBuilder.this.suggestionsProvider = (SuggestionProvider<S>) suggestionsProvider;
-			return this;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
 		public Builder<T> setArgumentParser(ArgumentParser<CommandSource, T> parser) {
 			Objects.requireNonNull(parser);
 			GenericArgumentBuilder.this.parser = (ArgumentParser<S, T>) parser;
@@ -148,7 +177,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		}
 
 		@Override
-		public Builder<T> setType(ArgumentType<T> type) {
+		public Builder<T> setType(ArgumentType<?> type) {
 			Objects.requireNonNull(type);
 			GenericArgumentBuilder.this.type = type;
 			return this;
@@ -161,8 +190,17 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		}
 
 		@Override
-		public Builder<T> setVariants(Supplier<T[]> variants) {
+		public Builder<T> setVariants(ArgumentSupplier variants) {
+			Objects.requireNonNull(variants);
 			GenericArgumentBuilder.this.variants = variants;
+			GenericArgumentBuilder.this.setSuggestionProvider();
+			return this;
+		}
+
+		@Override
+		public Builder<T> setUsage(UsageSupplier supplier) {
+			Objects.requireNonNull(supplier);
+			usage = supplier;
 			return this;
 		}
 

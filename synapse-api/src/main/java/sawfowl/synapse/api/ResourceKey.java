@@ -35,11 +35,15 @@ public interface ResourceKey {
 		return getNamespace() + ":" + getId();
 	}
 
+	default String asQuotedString() {
+		return "\"" + asString() + "\"";
+	}
+
 	interface Builder extends AbstractBuilder<ResourceKey> {
 
 		ResourceKey from(String namespace, String id);
 
-		ResourceKey tryParse(String string) throws RuntimeException;
+		ResourceKey tryParse(String string);
 
 	}
 
