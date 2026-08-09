@@ -68,16 +68,16 @@ public class DelayTimerTask implements Consumer<ScheduledTask> {
 			if(getExpireHourFromNow(seconds) > 0) {
 				if(hour != getExpireHourFromNow(seconds)) {
 					hour = getExpireHourFromNow(seconds);
-					player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitActivating(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
+					player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitingForActivation(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
 				}
 			} else if(seconds > 60) {
 				if(minute != getExpireMinuteFromNow(seconds)) {
 					minute = getExpireMinuteFromNow(seconds);
-					player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitActivating(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
+					player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitingForActivation(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
 				}
 			} else if(seconds == 60 || seconds == 30 || seconds == 10 || seconds <= 5 || first) {
 				first = false;
-				player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitActivating(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
+				player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getWaitingForActivation(command, seconds, SynapsePlugin.getLocales().getAsReferenced(player).getTime()).hoverEvent(HoverEvent.showText(Component.text("/" + command).color(NamedTextColor.LIGHT_PURPLE))));
 			}
 			seconds--;
 		}
