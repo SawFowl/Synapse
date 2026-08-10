@@ -10,12 +10,15 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import net.kyori.adventure.text.Component;
+
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.services.CommandService;
 import sawfowl.synapse.implementapi.command.IBrigadierCommand;
 import sawfowl.synapse.implementapi.command.argument.GenericArgumentBuilder;
+import sawfowl.synapse.utils.DelayTimerTask;
 
 public class ICommandService implements CommandService {
 
@@ -45,6 +48,11 @@ public class ICommandService implements CommandService {
 		return commands.containsKey(alias) ? Optional.ofNullable(commands.get(alias)) : commandsByAlias.containsKey(alias) ? Optional.ofNullable(commandsByAlias.get(alias)) : Optional.empty();
 	}
 
+	@Override
+	public boolean cancelingDelayedExecution(Player player, Component message) {
+		return DelayTimerTask.cancel(player, message);
+	}
+
 	public void register(SynapseBrigadierCommand command) {
 		if(commands.containsKey(command.getCommand())) throw new RuntimeException("The command '/" + command.getCommand() + "' is already registered!");
 		commands.put(command.getCommand(), command);
@@ -54,6 +62,10 @@ public class ICommandService implements CommandService {
 	public void unregister(SynapseBrigadierCommand command) {
 		unregister(command.getCommand());
 		if(command.getAliases() != null) for(String alias : command.getAliases()) unregister(alias);
+	}
+
+	public void clearLastUsage() {
+		commands.values().forEach(command -> ((IBrigadierCommand) command).clearLastUsage());
 	}
 
 	private void register(String alias, SynapseBrigadierCommand command) {
@@ -66,7 +78,7 @@ public class ICommandService implements CommandService {
 		if(commandsByAlias.containsKey(alias)) commandsByAlias.remove(alias);
 	}
 
-	public void registerDefaultBuilders() {
+	private void registerDefaultBuilders() {
 		defaultArguments.put(
 			"Player",
 			GenericArgumentBuilder.<Player>builder()
@@ -91,10 +103,6 @@ public class ICommandService implements CommandService {
 				.build()
 		);
 		defaultArguments.forEach((n, a) -> defaultOptArguments.put(n, cast(a).copy().setOptional()));
-	}
-
-	public void clearLastUsage() {
-		commands.values().forEach(command -> ((IBrigadierCommand) command).clearLastUsage());
 	}
 
 	private Optional<Duration> parseDuration(String s) {

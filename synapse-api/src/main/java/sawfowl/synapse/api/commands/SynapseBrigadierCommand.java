@@ -14,7 +14,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.VelocityBrigadierMessage;
 import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.proxy.Player;
 
 import net.kyori.adventure.builder.AbstractBuilder;
 import net.kyori.adventure.text.Component;
@@ -28,7 +27,6 @@ import sawfowl.synapse.api.exceptions.CommandException;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CallbackSevice;
 import sawfowl.synapse.api.text.callback.Callback;
-import sawfowl.synapse.api.utils.ThrowingConsumer;
 
 /**
  * An interface for creating and registering commands with arguments that support custom serialization.
@@ -41,70 +39,114 @@ public interface SynapseBrigadierCommand {
 		return BuilderService.get().get(Builder.class).setName(name).setPlugin(container);
 	}
 
+	/**
+	 * The main alias of the command.
+	 */
 	String getCommand();
 
+	/**
+	 * The plugin that registered the command.
+	 */
 	PluginContainer getPlugin();
 
+	/**
+	 * Aliases of the command.
+	 */
 	String[] getAliases();
 
+	/**
+	 * The executor of the command.
+	 */
 	ParameterizedExecutor getExecutor();
 
+	/**
+	 * A collection of command arguments.
+	 */
 	BrigadierArgumentsCollection<CommandSource> getArgumentsCollection();
 
+	/**
+	 * Register this command.
+	 */
 	SynapseBrigadierCommand register();
 
+	/**
+	 * Cancel the registration of this command.
+	 */
 	SynapseBrigadierCommand unregister();
 
 	/**
-	 * Additional optional settings for the command.
+	 * Additional optional settings for the command.<br>
+	 * These settings are used only if the player executes the command.
 	 */
 	CommandSettings getSettings();
 
+	/**
+	 * Parsing an argument and getting its value.
+	 * 
+	 * @param <T> - The type of the argument object.
+	 * @param context - The context of the command execution.
+	 * @param key - Identifier of the argument.
+	 * @return {@link Optional}, which, upon successful parsing, will contain an object with the specified type &ltT> . If parsing fails or if no argument has been entered, an empty {@link Optional} will be displayed.
+	 */
 	default <T> Optional<T> getArgument(CommandContext<CommandSource> context, String key) {
 		return getArgumentsCollection().parse(key, context);
 	}
 
+	/**
+	 * See {@link #getArgument}
+	 */
 	default Optional<String> getStringArgument(CommandContext<CommandSource> context, String key) {
 		return getArgument(context, key);
 	}
 
+	/**
+	 * See {@link #getArgument}
+	 */
 	default Optional<Boolean> getBooleanArgument(CommandContext<CommandSource> context, String key) {
 		return getArgument(context, key);
 	}
 
+	/**
+	 * See {@link #getArgument}
+	 */
 	default Optional<Integer> getIntegerArgument(CommandContext<CommandSource> context, String key) {
 		return getArgument(context, key);
 	}
 
+	/**
+	 * Use it when the command is executed successfully.
+	 */
 	default int success() {
 		return Command.SINGLE_SUCCESS;
 	}
 
+	/**
+	 * Use it if the command is executed unsuccessfully.
+	 */
 	default int fail() {
 		return 0;
 	}
 
 	/**
-	 * Code execution delay.<br>
-	 * Automatically activates the command's execution fee if required by the command's settings.<br>
-	 * You can use this with any part of your command execution code that suits you.
+	 * Note that methods marked as default will not be available if you have registered the command executor via a lambda.
+	 * If you need these methods, it is recommended to create classes that implement this interface.
+	 * <br><br>
+	 * Example lambda:
+	 * <pre>
+	 * (command, context) -> {
+	 * 	// Your code
+	 * 	return command.success();
+	 * }
+	 * </pre>
 	 */
-	void delay(Player player, String ignorePermission, ThrowingConsumer<ParameterizedExecutor, CommandException> consumer) throws CommandException;
-
-	/**
-	 * Payment for the execution of the command.<br>
-	 * You can use this with any part of your command execution code that suits you.
-	 */
-	void economy(Player player, String ignoreEconomyPermission) throws CommandException;
-
 	@FunctionalInterface
 	interface ParameterizedExecutor {
 
 		/**
-		 * 
 		 * @param command - This command
 		 * @param context - The context of the command execution.
-		 * @return Use {@link SynapseBrigadierCommand#fail()} if the command fails, or {@link SynapseBrigadierCommand#success()} if it succeeds. This affects the cooldown between executions.
+		 * @return Use {@link SynapseBrigadierCommand#fail()} if the command fails, or {@link SynapseBrigadierCommand#success()} if it succeeds.
+		 * This affects the cooldown between executions.
 		 * @throws CommandException A text exception when executing the command, which will be shown to the {@link CommandSource}.
 		 */
 		int execute(SynapseBrigadierCommand command,  CommandContext<CommandSource> context) throws CommandException;

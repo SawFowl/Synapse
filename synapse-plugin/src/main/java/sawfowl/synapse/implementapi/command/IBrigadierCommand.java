@@ -27,7 +27,6 @@ import com.velocitypowered.api.proxy.Player;
 
 import net.kyori.adventure.text.Component;
 
-import sawfowl.synapse.Permissions;
 import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
@@ -115,27 +114,24 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		return settings;
 	}
 
-	@Override
-	public void delay(Player player, String ignorePermission, ThrowingConsumer<ParameterizedExecutor, CommandException> consumer) throws CommandException {
-		if(settings.getDelayExecute() > 0 && !player.hasPermission(ignorePermission)) {
-			Synapse.getProxy().getScheduler().buildTask(
-				SynapsePlugin.getInstance(),
-				new DelayTimerTask(consumer, player, container, command, this, ignorePermission)
-			).repeat(1, TimeUnit.SECONDS).schedule();
-		} else {
-			economy(player, ignorePermission);
-			consumer.accept(getExecutor());
-		}
+	public void delay(Player player, ThrowingConsumer<IBrigadierCommand, CommandException> consumer) throws CommandException {
+		Synapse.getProxy().getScheduler().buildTask(
+			SynapsePlugin.getInstance(),
+			new DelayTimerTask(consumer, player, container, command, this)
+		).repeat(1, TimeUnit.SECONDS).schedule();
 	}
 
-	@Override
-	public void economy(Player player, String ignoreEconomyPermission) throws CommandException {
-		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || player.hasPermission(ignoreEconomyPermission)) return;
+	public boolean economy(Player player) throws CommandException {
 		var price = settings.getPrice().orElse(null);
-		if(price == null || price.getPrice().doubleValue() < 0) return;
+		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || price == null || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return true;
+		if(price == null || price.getPrice().doubleValue() < 0) return true;
 		var currency = price.getCurrency();
 		var account = Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player);
-		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
+		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) {
+			exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
+			return false;
+		}
+		return true;
 	
 	}
 
@@ -304,18 +300,35 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
 			} else if(argumentsCollection != null) brigadier = context -> {
 				try {
-					if(settings != null && settings.getCooldown() > 0 && context.getSource() instanceof Player player && !player.hasPermission(Permissions.getIgnoreCooldown(command))) {
-						if(lastUsed.containsKey(player.getUniqueId())) {
-							if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
+					if(testArgsOnExecute(context, context.getInput())) return fail();
+					if(context.getSource() instanceof Player player) {
+						if(!economy(player)) return fail();
+						if(settings.getCooldown() > 0 && lastUsed.containsKey(player.getUniqueId())) {
+							if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
 								player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
 								return fail();
 							} else lastUsed.remove(player.getUniqueId());
 						}
-						int result = executor.execute(IBrigadierCommand.this, context);
-						if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-						return result;
+						if(settings.getDelay() > 0 && settings.getIgnoreDelay() != null && !player.hasPermission(settings.getIgnoreDelay())) {
+							delay(player, _ -> {
+								if(settings.getCooldown() > 0 && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
+									int result = executor.execute(IBrigadierCommand.this, context);
+									if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+									return result;
+								}
+								return executor.execute(IBrigadierCommand.this, context);
+							});
+						} else {
+							if(settings.getCooldown() > 0 && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
+								int result = executor.execute(IBrigadierCommand.this, context);
+								if(result != 0) {
+									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+								}
+								return result;
+							}
+							return executor.execute(IBrigadierCommand.this, context);
+						}
 					}
-					if(testArgsOnExecute(context, context.getInput())) return 0;
 					return executor.execute(IBrigadierCommand.this, context);
 				} catch (CommandException e) {
 					context.getSource().sendMessage(e.componentMessage());

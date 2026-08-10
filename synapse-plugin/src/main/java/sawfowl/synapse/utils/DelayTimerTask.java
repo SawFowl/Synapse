@@ -1,7 +1,7 @@
 package sawfowl.synapse.utils;
 
-import java.math.BigDecimal;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -17,50 +17,63 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.Synapse;
-import sawfowl.synapse.api.commands.SynapseBrigadierCommand.ParameterizedExecutor;
-import sawfowl.synapse.api.economy.Currency;
 import sawfowl.synapse.api.exceptions.CommandException;
-import sawfowl.synapse.api.services.EconomyService;
+import sawfowl.synapse.api.text.Text;
 import sawfowl.synapse.api.utils.ThrowingConsumer;
 import sawfowl.synapse.implementapi.command.IBrigadierCommand;
 
 public class DelayTimerTask implements Consumer<ScheduledTask> {
 
-
 	private final UUID uuid;
 	private long seconds;
-	private final ThrowingConsumer<ParameterizedExecutor, CommandException> consumer;
+	private final ThrowingConsumer<IBrigadierCommand, CommandException> consumer;
 	private long hour;
 	private long minute;
-	boolean first = true;
-	final String command, ignoreEconomyPermission;
-	private IBrigadierCommand commandClass;
-	public DelayTimerTask(ThrowingConsumer<ParameterizedExecutor, CommandException> consumer, Player player, PluginContainer container, String command, IBrigadierCommand commandObject, String ignoreEconomyPermission) {
+	private boolean first = true;
+	private final String command;
+	private IBrigadierCommand commandInstance;
+	private static final Map<UUID,String> EXECUTORS = new HashMap<>();
+	public DelayTimerTask(ThrowingConsumer<IBrigadierCommand, CommandException> consumer, Player player, PluginContainer container, String command, IBrigadierCommand commandObject) {
 		this.uuid = player.getUniqueId();
-		this.seconds = commandClass.getSettings().getDelayExecute();
+		this.seconds = commandInstance.getSettings().getDelay();
 		this.consumer = consumer;
 		this.command = commandObject.getCommand();
-		this.commandClass = commandObject;
-		this.ignoreEconomyPermission = ignoreEconomyPermission;
+		this.commandInstance = commandObject;;
+		EXECUTORS.put(uuid, command);
+	}
+
+	public static boolean cancel(Player player, Component message) {
+		if(player != null && EXECUTORS.containsKey(player.getUniqueId())) {
+			if(message != null) message = Text.of(message).replace("%command%", EXECUTORS.get(player.getUniqueId())).get();
+			EXECUTORS.remove(player.getUniqueId());
+			if(message != null) player.sendMessage(message);
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public void accept(ScheduledTask task) {
+		if(!EXECUTORS.containsKey(uuid)) {
+			task.cancel();
+			return;
+		}
 		if(seconds <= 0 || !getPlayer(uuid).isPresent() || !getPlayer(uuid).get().isActive()) {
 			Synapse.getProxy().getScheduler().buildTask(this, () -> {
 				getPlayer(uuid).ifPresent(player -> {
 					try {
-						economy(player);
-						consumer.accept(commandClass.getExecutor());
+						consumer.accept(commandInstance);
 					} catch (CommandException e) {
 						player.sendMessage(e.componentMessage());
 					}
 				});
 			}).schedule();
+			EXECUTORS.remove(uuid);
 			task.cancel();
 			return;
 		} else {
 			if(!getPlayer(uuid).isPresent() || !getPlayer(uuid).get().isActive()) {
+				EXECUTORS.remove(uuid);
 				task.cancel();
 				return;
 			}
@@ -81,20 +94,6 @@ public class DelayTimerTask implements Consumer<ScheduledTask> {
 			}
 			seconds--;
 		}
-	}
-
-	void economy(Player player) throws CommandException {
-		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || player.hasPermission(ignoreEconomyPermission)) return;
-		var price = commandClass.getSettings().getPrice().orElse(null);
-		if(price == null || price.getPrice().doubleValue() < 0) return;
-		var currency = price.getCurrency();
-		var account = Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player);
-		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
-	
-	}
-
-	private CommandException exceptionMoney(Locale locale, Currency currency, BigDecimal money) throws CommandException {
-		return new CommandException(SynapsePlugin.getLocales().getAsReferenced(locale).getCommands().getExceptions().getNoMoney(currency, money, command));
 	}
 
 	private long getExpireHourFromNow(long second) {

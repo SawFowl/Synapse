@@ -1,6 +1,7 @@
 package sawfowl.synapse.api;
 
 import com.google.inject.Inject;
+
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import sawfowl.synapse.api.services.BuilderService;

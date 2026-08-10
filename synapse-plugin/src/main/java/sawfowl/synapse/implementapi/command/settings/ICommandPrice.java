@@ -14,6 +14,7 @@ public class ICommandPrice implements CommandPrice {
 
 	private Currency currency;
 	private BigDecimal price;
+	private String ignorePermission;
 	private ICommandPrice() {}
 
 	@Override
@@ -24,6 +25,11 @@ public class ICommandPrice implements CommandPrice {
 	@Override
 	public BigDecimal getPrice() {
 		return price;
+	}
+
+	@Override
+	public String getIgnorePermission() {
+		return ignorePermission;
 	}
 
 	private Builder createBuilder() {
@@ -38,11 +44,12 @@ public class ICommandPrice implements CommandPrice {
 		}
 
 		@Override
-		public CommandPrice of(Currency currency, BigDecimal price) {
+		public CommandPrice of(Currency currency, BigDecimal price, String ignorePermission) {
 			Objects.requireNonNull(currency);
 			Objects.requireNonNull(price);
 			ICommandPrice.this.currency = currency;
 			ICommandPrice.this.price = price;
+			ICommandPrice.this.ignorePermission = ignorePermission;
 			return build();
 		}
 		

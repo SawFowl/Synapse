@@ -13,6 +13,9 @@ public interface ServiceProvider {
 
 	<S> S get(Class<S> serviceClass);
 
+	/**
+	 * It is used to get objects of various services. Does not apply to default services.
+	 */
 	<S> void registerPendingListener(Class<S> serviceClass, Consumer<S> consumer);
 
 }

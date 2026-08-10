@@ -13,6 +13,7 @@ import org.spongepowered.configurate.ConfigurationNode;
 import com.google.inject.Inject;
 
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPreShutdownEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
@@ -192,6 +193,12 @@ public class SynapsePlugin {
 	@Subscribe
 	public void onStop(ProxyReloadEvent event) {
 		reload();
+	}
+
+	@Subscribe
+	public void onCommand(CommandExecuteEvent event) {
+		if(!(event.getCommandSource() instanceof Player player)) return;
+		ICommandService.getInstance().cancelingDelayedExecution(player, null);
 	}
 
 	public void reload() {

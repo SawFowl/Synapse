@@ -1,5 +1,6 @@
 package sawfowl.synapse.implementapi.services;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ public class IServiceProvider implements ServiceProvider {
 		ConfigurationService.class,
 		PlaceholderService.class
 	);
-	private Map<Class<?>, Consumer<?>> listeners = new HashMap<>();
+	private Map<Class<?>, List<Consumer<?>>> listeners = new HashMap<>();
 	public IServiceProvider(ProxyServer server) {
 		register(ProxyServer.class, server);
 		register(LoggerService.class, ILoggerService.getInstance());
@@ -52,7 +53,13 @@ public class IServiceProvider implements ServiceProvider {
 	public <S, I extends S> void register(Class<S> serviceClass, I serviceImplement) {
 		if(isExist(serviceClass)) throw new RuntimeException("The '" + serviceClass.getName() + "' service is already registered.");
 		services.put(serviceClass, serviceImplement);
-		if(listeners.containsKey(serviceClass)) acceptListener(serviceClass, listeners.get(serviceClass), serviceImplement);
+		if(listeners.containsKey(serviceClass)) {
+			List<Consumer<?>> accepted = new ArrayList<Consumer<?>>();
+			listeners.get(serviceClass).forEach(consumer -> accepted.add(acceptListener(serviceClass, consumer, serviceImplement)));
+			listeners.get(serviceClass).removeAll(accepted);
+			if(listeners.get(serviceClass).isEmpty()) listeners.remove(serviceClass);
+			accepted.clear();
+		}
 	}
 
 	@Override
@@ -74,12 +81,13 @@ public class IServiceProvider implements ServiceProvider {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S, I extends S> void acceptListener(Class<S> clazz, Consumer<?> consumer, I service) {
-		acceptListener(clazz, service, (Consumer<S>) consumer);
+	private <S, I extends S> Consumer<S> acceptListener(Class<S> clazz, Consumer<?> consumer, I service) {
+		return acceptListener(clazz, service, (Consumer<S>) consumer);
 	}
 
-	private <S, I extends S> void acceptListener(Class<S> clazz, I service, Consumer<S> consumer) {
+	private <S, I extends S> Consumer<S>  acceptListener(Class<S> clazz, I service, Consumer<S> consumer) {
 		consumer.accept(service);
+		return consumer;
 	}
 
 }
