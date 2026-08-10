@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.velocitypowered.api.command.CommandSource;
 
@@ -23,6 +24,13 @@ public class ICallbackService implements CallbackSevice {
 	}
 
 	@Override
+	public String addExecutor(Consumer<CommandSource> consumer, Predicate<CommandSource> ignoreTest) {
+		String uuid = UUID.randomUUID().toString();
+		executors.put(uuid.toString(), new Executor(consumer).setIgnoreTest(ignoreTest));
+		return "/callback execute " + uuid;
+	}
+
+	@Override
 	public String addOneTimeExecution(Consumer<CommandSource> consumer) {
 		String uuid = UUID.randomUUID().toString();
 		executors.put(uuid.toString(), new Executor(consumer).setSingle(true));
@@ -37,7 +45,14 @@ public class ICallbackService implements CallbackSevice {
 
 	private Consumer<CommandSource> checkRemove(String uuid, Executor executor, CommandSource forTest) {
 		if(executor.isSingle()) executors.remove(uuid);
-		return executor == null || (executor.getIgnoreTest() != null && executor.getIgnoreTest().test(forTest)) ? null : executor.getConsumer();
+		return executor.getIgnoreTest() != null && executor.getIgnoreTest().test(forTest) ? null : executor.getConsumer();
+	}
+
+	@Override
+	public String addOneTimeExecution(Consumer<CommandSource> consumer, Predicate<CommandSource> ignoreTest) {
+		String uuid = UUID.randomUUID().toString();
+		executors.put(uuid.toString(), new Executor(consumer).setSingle(true).setIgnoreTest(ignoreTest));
+		return "/callback execute " + uuid;
 	}
 
 }

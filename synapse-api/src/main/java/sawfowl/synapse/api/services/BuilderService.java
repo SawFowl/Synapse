@@ -3,9 +3,14 @@ package sawfowl.synapse.api.services;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import javax.annotation.Nullable;
+
 import net.kyori.adventure.builder.AbstractBuilder;
 import sawfowl.synapse.api.Synapse;
 
+/**
+ * @author SawFowl
+ */
 public interface BuilderService {
 
 	static BuilderService get() {
@@ -16,8 +21,11 @@ public interface BuilderService {
 
 	<O, T extends AbstractBuilder<O>> Optional<T> find(Class<T> builderClass);
 
-	<O, T extends AbstractBuilder<O>> T get(Class<T> builderClass);
+	@Nullable <O, T extends AbstractBuilder<O>> T get(Class<T> builderClass);
 
+	/**
+	 * @throws RuntimeException If the builder is already registered.
+	 */
 	<O, T extends AbstractBuilder<O>> void add(Class<T> builderClass, Supplier<? super T> supplier) throws RuntimeException;
 
 }

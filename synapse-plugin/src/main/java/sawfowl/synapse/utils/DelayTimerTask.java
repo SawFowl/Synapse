@@ -32,13 +32,13 @@ public class DelayTimerTask implements Consumer<ScheduledTask> {
 	private boolean first = true;
 	private final String command;
 	private IBrigadierCommand commandInstance;
-	private static final Map<UUID,String> EXECUTORS = new HashMap<>();
+	private static final Map<UUID, String> EXECUTORS = new HashMap<>();
 	public DelayTimerTask(ThrowingConsumer<IBrigadierCommand, CommandException> consumer, Player player, PluginContainer container, String command, IBrigadierCommand commandObject) {
 		this.uuid = player.getUniqueId();
 		this.seconds = commandInstance.getSettings().getDelay();
 		this.consumer = consumer;
 		this.command = commandObject.getCommand();
-		this.commandInstance = commandObject;;
+		this.commandInstance = commandObject;
 		EXECUTORS.put(uuid, command);
 	}
 

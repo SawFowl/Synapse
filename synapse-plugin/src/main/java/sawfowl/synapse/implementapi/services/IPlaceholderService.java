@@ -83,7 +83,6 @@ public class IPlaceholderService implements PlaceholderService {
 		return text;
 	}
 
-	@Override
 	public Text applySystemPlaceholders(Text text, Component def) {
 		SYSTEM_PLACEHOLDERS.values().forEach(placeholder -> placeholder.apply(text, null, def));
 		return text;

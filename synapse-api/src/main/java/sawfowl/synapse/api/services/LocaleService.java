@@ -19,7 +19,7 @@ public interface LocaleService {
 
 	/*
 	 * Getting the system locale.<br>
-	 * If Sponge does not support your system locale, the default locale for Sponge will be selected.
+	 * If game does not support your system locale, the default locale for game will be selected.
 	 */
 	public abstract Locale getSystemOrDefaultLocale();
 
@@ -30,8 +30,8 @@ public interface LocaleService {
 	 * This class will be applied automatically to all localizations loaded after its addition.<br>
 	 * Automatic application of this class does not make any changes to the localization data.
 	 * 
-	 * @param defaultReference - The serializable class extends {@link Translation}
 	 * @param container - {@link PluginContainer}
+	 * @param defaultReference - The serializable class extends {@link Translation}
 	 */
 	public abstract <T extends Translation> void setDefaultReference(PluginContainer container, Class<T> defaultReference);
 

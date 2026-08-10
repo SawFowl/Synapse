@@ -21,6 +21,9 @@ import sawfowl.synapse.api.config.builders.ReferencedConfigBuilder;
 import sawfowl.synapse.api.config.builders.ReferencedVirtualConfigBuilder;
 import sawfowl.synapse.api.config.builders.VirtualConfigBuilder;
 
+/**
+ * @author SawFowl
+ */
 public interface ConfigurationService {
 
 	static ConfigurationService get() {

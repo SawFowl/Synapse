@@ -131,10 +131,6 @@ public interface Text {
 		return PlaceholderService.get().apply(this, def, args);
 	}
 
-	default <T> Text applySystemPlaceholders(Component def) {
-		return PlaceholderService.get().applySystemPlaceholders(this, def);
-	}
-
 	public interface Builder extends AbstractBuilder<Text> {
 
 		Text fromComponent(Component component);
