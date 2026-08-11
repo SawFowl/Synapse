@@ -114,10 +114,10 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		return settings;
 	}
 
-	public void delay(Player player, ThrowingConsumer<IBrigadierCommand, CommandException> consumer) throws CommandException {
+	public void delay(Player player, String input, ThrowingConsumer<IBrigadierCommand, CommandException> consumer) throws CommandException {
 		Synapse.getProxy().getScheduler().buildTask(
 			SynapsePlugin.getInstance(),
-			new DelayTimerTask(consumer, player, container, command, this)
+			new DelayTimerTask(consumer, player, container, input, this)
 		).repeat(1, TimeUnit.SECONDS).schedule();
 	}
 
@@ -303,30 +303,35 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 					if(testArgsOnExecute(context, context.getInput())) return fail();
 					if(context.getSource() instanceof Player player) {
 						if(!economy(player)) return fail();
-						if(settings.getCooldown() > 0 && lastUsed.containsKey(player.getUniqueId())) {
-							if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
-								player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
-								return fail();
-							} else lastUsed.remove(player.getUniqueId());
-						}
-						if(settings.getDelay() > 0 && settings.getIgnoreDelay() != null && !player.hasPermission(settings.getIgnoreDelay())) {
-							delay(player, _ -> {
-								if(settings.getCooldown() > 0 && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
-									int result = executor.execute(IBrigadierCommand.this, context);
-									if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-									return result;
+						if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
+							if(lastUsed.containsKey(player.getUniqueId())) {
+								if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
+									player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
+									return fail();
+								} else {
+									lastUsed.remove(player.getUniqueId());
+									if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+										delay(player, context.getInput(), _ -> {
+											int result = executor.execute(IBrigadierCommand.this, context);
+											if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+											return result;
+										});
+										return success();
+									}
 								}
-								return executor.execute(IBrigadierCommand.this, context);
-							});
-						} else {
-							if(settings.getCooldown() > 0 && settings.getIgnoreCooldown() != null && !player.hasPermission(settings.getIgnoreCooldown())) {
+							} else {
+								if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+									delay(player, context.getInput(), _ -> {
+										int result = executor.execute(IBrigadierCommand.this, context);
+										if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+										return result;
+									});
+									return success();
+								}
 								int result = executor.execute(IBrigadierCommand.this, context);
-								if(result != 0) {
-									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-								}
+								if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
 								return result;
 							}
-							return executor.execute(IBrigadierCommand.this, context);
 						}
 					}
 					return executor.execute(IBrigadierCommand.this, context);

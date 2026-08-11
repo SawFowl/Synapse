@@ -16,7 +16,7 @@ public class Commands implements Translation {
 	public static Commands createRu() {
 		Commands commands = new Commands();
 		commands.exceptions = Exceptions.createRu();
-		commands.waitingForActivation = commands.deserialize("&eАктивация команды '%command%' через: &6%time%");
+		commands.waitingForActivation = commands.deserialize("&eАктивация команды '/%command%' через: &6%time%");
 		return commands;
 	}
 
@@ -25,7 +25,7 @@ public class Commands implements Translation {
 	@Setting("Exceptions")
 	private Exceptions exceptions = Exceptions.createEn();
 	@Setting("WaitingForActivation")
-	private Component waitingForActivation = deserialize("&eActivating the '%command%' command via: &6%time%");
+	private Component waitingForActivation = deserialize("&eActivating the '/%command%' command via: &6%time%");
 
 	public Exceptions getExceptions() {
 		return exceptions;

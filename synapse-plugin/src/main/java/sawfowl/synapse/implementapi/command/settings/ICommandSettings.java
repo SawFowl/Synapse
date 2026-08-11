@@ -13,8 +13,8 @@ public class ICommandSettings implements CommandSettings {
 		return new ICommandSettings().createBuilder();
 	}
 
-	private Optional<CommandPrice> price;
-	private int delay, cooldown;
+	private Optional<CommandPrice> price = Optional.empty();
+	private int delay = 5, cooldown = 10;
 	String ignoreDelay, ignoreCooldown;
 	private ICommandSettings(){}
 

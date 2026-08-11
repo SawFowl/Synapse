@@ -49,7 +49,7 @@ public interface Translation {
 	}
 
 	default Component replace(Component component, String[] keys, Component... values) {
-		return replace(component, replaceMap(keys, values));
+		return replaceComponents(component, replaceMapComponents(keys, values));
 	}
 
 	default Component replace(Component component, String[] keys, String... values) {

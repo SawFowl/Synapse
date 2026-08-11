@@ -27,7 +27,8 @@ public class Exceptions implements Translation {
 		if(!exceptions.argumentNotPresent.containsKey("Server")) exceptions.argumentNotPresent.put("Server", exceptions.deserialize("&cНужно указать название сервера."));
 		if(!exceptions.argumentNotPresent.containsKey("Other")) exceptions.argumentNotPresent.put("Other", exceptions.deserialize("&cАргумент не введен или введен не корректно."));
 		exceptions.cooldown = exceptions.deserialize("&cВам нужно подождать %time% прежде чем вы снова сможете использовать эту команду.");
-		exceptions.noMoney = exceptions.deserialize("&cЧтобы выполнить команду '/command', на вашем балансе должно быть не менее %currency%%money%.");
+		exceptions.noMoney = exceptions.deserialize("&cЧтобы выполнить команду '/%command%', на вашем балансе должно быть не менее %currency%%money%.");
+		exceptions.delayCancel = exceptions.deserialize("&cОтменено выполнение команды '/%command%' так как вы ввели другую команду.");
 		return exceptions;
 	}
 
@@ -47,6 +48,8 @@ public class Exceptions implements Translation {
 	private Component cooldown = deserialize("&cYou need to wait %time% before you can use this command again.");
 	@Setting("NoMoney")
 	private Component noMoney = deserialize("&cTo execute the '/%command%' command, you need to have at least %currency%%money% in your balance.");
+	@Setting("DelayCancel")
+	private Component delayCancel = deserialize("&cThe execution of the command '/%command%' was canceled because you entered another command.");
 
 	public Component getNotPresent(String key) {
 		return argumentNotPresent.containsKey(key) ? argumentNotPresent.get(key) : argumentNotPresent.get("Other");
@@ -62,6 +65,10 @@ public class Exceptions implements Translation {
 
 	public Component getNoMoney(Currency currency, BigDecimal money, String command) {
 		return replace(noMoney, new String[] {CURRENCY, MONEY, COMMAND}, currency.getStyledChar(), Component.text(money.doubleValue()), "/" + command);
+	}
+
+	public Component getDelayCancel() {
+		return delayCancel;
 	}
 
 }

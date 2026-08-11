@@ -198,7 +198,7 @@ public class SynapsePlugin {
 	@Subscribe
 	public void onCommand(CommandExecuteEvent event) {
 		if(!(event.getCommandSource() instanceof Player player)) return;
-		ICommandService.getInstance().cancelingDelayedExecution(player, null);
+		ICommandService.getInstance().cancelingDelayedExecution(player, locales.getAsReferenced(player).getCommands().getExceptions().getDelayCancel());
 	}
 
 	public void reload() {
