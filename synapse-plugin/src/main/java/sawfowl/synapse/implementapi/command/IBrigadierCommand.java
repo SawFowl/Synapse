@@ -99,14 +99,14 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 			createBrigadierCommand()
 		);
 		((ICommandService) CommandService.get()).register(this);
-		 return this;
+		return this;
 	}
 
 	@Override
 	public SynapseBrigadierCommand unregister() {
 		Synapse.getProxy().getCommandManager().unregister(command);
 		((ICommandService) CommandService.get()).unregister(this);
-		 return this;
+		return this;
 	}
 
 	@Override
@@ -121,10 +121,10 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		).repeat(1, TimeUnit.SECONDS).schedule();
 	}
 
-	public boolean economy(Player player) throws CommandException {
+	public boolean economyTest(Player player) throws CommandException {
 		var price = settings.getPrice().orElse(null);
-		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || price == null || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return true;
-		if(price == null || price.getPrice().doubleValue() < 0) return true;
+		if(price == null || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return true;
+		if(price.getPrice().doubleValue() < 0) return true;
 		var currency = price.getCurrency();
 		var account = Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player);
 		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) {
@@ -133,6 +133,13 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		}
 		return true;
 	
+	}
+
+	public void economyUse(Player player) throws CommandException {
+		var price = settings.getPrice().orElse(null);
+		if(price == null || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return;
+		if(price.getPrice().doubleValue() < 0) return;
+		Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player).withdraw(price.getCurrency(), price.getPrice());
 	}
 
 	public void clearLastUsage() {
@@ -302,7 +309,6 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 				try {
 					if(testArgsOnExecute(context, context.getInput())) return fail();
 					if(context.getSource() instanceof Player player) {
-						if(!economy(player)) return fail();
 						if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
 							if(lastUsed.containsKey(player.getUniqueId())) {
 								if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
@@ -312,8 +318,12 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 									lastUsed.remove(player.getUniqueId());
 									if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
 										delay(player, context.getInput(), _ -> {
+											if(!economyTest(player)) return fail();
 											int result = executor.execute(IBrigadierCommand.this, context);
-											if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+											if(result != 0) {
+												economyUse(player);
+												lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+											}
 											return result;
 										});
 										return success();
@@ -322,14 +332,22 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 							} else {
 								if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
 									delay(player, context.getInput(), _ -> {
+										if(!economyTest(player)) return fail();
 										int result = executor.execute(IBrigadierCommand.this, context);
-										if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+										if(result != 0) {
+											economyUse(player);
+											lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+										}
 										return result;
 									});
 									return success();
 								}
+								if(!economyTest(player)) return fail();
 								int result = executor.execute(IBrigadierCommand.this, context);
-								if(result != 0) lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+								if(result != 0) {
+									economyUse(player);
+									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+								}
 								return result;
 							}
 						}
