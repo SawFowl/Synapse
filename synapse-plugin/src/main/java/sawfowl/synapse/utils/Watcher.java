@@ -121,24 +121,7 @@ class Watcher {
 			if(path.resolve(fileName).toFile().exists()) return;
 			localeService.getLocales(container).remove(locale);
 			logger.info("[FileWatcher] " + getMessages().getRemove(locale, container));
-			fireEvent(new LocaleEvent.Delete() {
-
-				@Override
-				public String getPluginId() {
-					return container.getDescription().getId();
-				}
-
-				@Override
-				public Locale getLocale() {
-					return locale;
-				}
-
-				@Override
-				public String getFileName() {
-					return fileName;
-				}
-				
-			});
+			fireEvent(new DeleteEvent(container.getDescription().getId(), locale, fileName));
 		}).delay(200, TimeUnit.MILLISECONDS).schedule();
 	}
 
@@ -254,6 +237,25 @@ class Watcher {
 			return Objects.equals(container.getDescription().getId(), ((UpdateInfo) obj).container.getDescription().getId()) && Objects.equals(locale, ((UpdateInfo) obj).locale) && time == ((UpdateInfo) obj).time;
 		}
 
+	}
+
+	private record DeleteEvent(String pluginId, Locale locale, String file) implements LocaleEvent.Delete {
+
+		@Override
+		public String getPluginId() {
+			return pluginId;
+		}
+
+		@Override
+		public Locale getLocale() {
+			return locale;
+		}
+
+		@Override
+		public String getFileName() {
+			return file;
+		}
+		
 	}
 
 }

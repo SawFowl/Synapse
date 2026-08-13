@@ -7,12 +7,9 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.command.VelocityBrigadierMessage;
 import com.velocitypowered.api.plugin.PluginContainer;
 
 import net.kyori.adventure.builder.AbstractBuilder;
@@ -145,9 +142,10 @@ public interface SynapseBrigadierCommand {
 		/**
 		 * @param command - This command
 		 * @param context - The context of the command execution.
-		 * @return Use {@link SynapseBrigadierCommand#fail()} if the command fails, or {@link SynapseBrigadierCommand#success()} if it succeeds.
+		 * @return Use {@link SynapseBrigadierCommand#fail()} if the command fails, or {@link SynapseBrigadierCommand#success()} if successful.
 		 * This affects the cooldown between executions.
-		 * @throws CommandException A text exception when executing the command, which will be shown to the {@link CommandSource}.
+		 * @throws CommandException A text exception when executing the command, which will be shown to the {@link CommandSource}.<br>
+		 * Any exception means that the command was executed unsuccessfully. This is equivalent to {@link SynapseBrigadierCommand#fail()}.
 		 */
 		int execute(SynapseBrigadierCommand command,  CommandContext<CommandSource> context) throws CommandException;
 
@@ -179,10 +177,16 @@ public interface SynapseBrigadierCommand {
 			return ClickEvent.runCommand(CallbackSevice.get().addOneTimeExecution(consumer));
 		}
 
-		/*default ClickEvent<Payload.Text> callbackSingle(Consumer<CommandSource> consumer, Predicate<CommandSource> ignoreTest) {
+		/**
+		 * Create clickable messages with the execution of your code.
+		 */
+		default ClickEvent<Payload.Text> callbackSingle(Consumer<CommandSource> consumer, Predicate<CommandSource> ignoreTest) {
 			return ClickEvent.runCommand(CallbackSevice.get().addOneTimeExecution(consumer, ignoreTest));
-		}*/
+		}
 
+		/**
+		 * Create clickable messages with the execution of your code.
+		 */
 		default ClickEvent<Payload.Text> callback(Runnable runnable) {
 			return Callback.of(runnable);
 		}
@@ -190,15 +194,15 @@ public interface SynapseBrigadierCommand {
 		/**
 		 * Creating an exception when executing a command.
 		 */
-		default CommandSyntaxException exception(String message) {
-			return new CommandException(new LiteralMessage(message));
+		default CommandException exception(String message) throws CommandException {
+			throw new CommandException(message);
 		}
 
 		/**
 		 * Creating an exception when executing a command.
 		 */
-		default CommandSyntaxException exception(Component message) {
-			return new CommandException(VelocityBrigadierMessage.tooltip(message));
+		default CommandException exception(Component message) throws CommandException {
+			throw new CommandException(message);
 		}
 
 	}

@@ -21,6 +21,7 @@ public class LoggerMessages {
 		loggerMessages.reload = "Файл локализации \"%file%\" для плагина \"%plugin%\" был изменен! Перезагрузка...";
 		loggerMessages.saveAsset = "Был сохранен конфиг локализации \"%file%\" для плагина \"%plugin%\".";
 		loggerMessages.executorNotAssigned = "Для команды '/%command%' не назначен исполнитель или дочерние команды.";
+		loggerMessages.economyNotFound = "Похоже что функционал экономики не реализован, либо плагин реализующий его регистрирует сервис на более позднем этапе. Некоторые функции могут не работать.";
 		return loggerMessages;
 	}
 
@@ -38,6 +39,8 @@ public class LoggerMessages {
 	private String saveAsset = "Locale config \"%file%\" for plugin \"%plugin%\" has been saved.";
 	@Setting("ExecutorNotAssigned")
 	private String executorNotAssigned = "An executor or subcommands have not been assigned to the '/%command%' command.";
+	@Setting("EconomyNotFound")
+	private String economyNotFound = "It seems that the functionality of the economy has not been implemented, or the plugin implementing it registers the service at a later stage. Some functions may not work.";
 
 	public String getStartWatch() {
 		return startWatch;
@@ -61,6 +64,10 @@ public class LoggerMessages {
 
 	public String getExecutorNotAssigned(String command) {
 		return executorNotAssigned.replace(COMMAND, command);
+	}
+
+	public String getEconomyNotFound() {
+		return economyNotFound;
 	}
 
 }

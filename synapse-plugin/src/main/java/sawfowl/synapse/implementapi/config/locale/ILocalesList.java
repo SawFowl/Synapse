@@ -47,20 +47,19 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 	private ILocalesList(PluginContainer container, Path configDirectory, LocaleService localeService) {
 		this.container = container;
 		if(getConfig() != null) {
-			if(getConfig().getLocalesSettings(container).getPath().contains("{SYNAPSE_PATH}")) {
-				if(getConfig().getLocalesSettings(container).getPath().contains("{PATH_SEPARATOR}")) {
-					if(getConfig().getLocalesSettings(container).getPath().endsWith("{PATH_SEPARATOR}")) {
-						path = Path.of(getConfig().getLocalesSettings(container).getPath().replace("{SYNAPSE_PATH}", SynapsePlugin.getSynapsePluginConfigDir()).replace("{PATH_SEPARATOR}", File.separator) + container.getDescription().getId());
-					} else path = Path.of(getConfig().getLocalesSettings(container).getPath().replace("{SYNAPSE_PATH}", SynapsePlugin.getSynapsePluginConfigDir()).replace("{PATH_SEPARATOR}", File.separator) + File.separator + container.getDescription().getId());
-				} else path = Path.of(getConfig().getLocalesSettings(container).getPath().replace("{SYNAPSE_PATH}", SynapsePlugin.getSynapsePluginConfigDir() + File.separator + container.getDescription().getId()));
-			} else if(getConfig().getLocalesSettings(container).getPath().contains("{PLUGIN_CONFIG_PATH}")) {
-				path = Path.of(getConfig().getLocalesSettings(container).getPath().replace("{PLUGIN_CONFIG_PATH}", SynapsePlugin.getMainConfigDir() + File.separator + container.getDescription().getId()).replace("{PATH_SEPARATOR}", File.separator));
-			} else path = configDirectory.resolve(container.getDescription().getId());
-		} else path = configDirectory.resolve(container.getDescription().getId());
+			String dir = getConfig().getLocalesSettings(container).getPath()
+					.replace("{SYNAPSE_PATH}", SynapsePlugin.getSynapsePluginConfigDir())
+					.replace("{PATH_SEPARATOR}", File.separator)
+					.replace("{PLUGIN_CONFIG_PATH}", SynapsePlugin.getMainConfigDir() + File.separator + container.getDescription().getId() + File.separator + "locales");
+				if(dir.endsWith(File.separator)) dir += "locales";
+				if(dir.endsWith(SynapsePlugin.getSynapsePluginConfigDir())) dir += File.separator + "locales" + File.separator + container.getDescription().getId();
+			path = Path.of(dir);
+			dir = null;
+		} else path = configDirectory.resolve("locales");
 		createFolders(path, path.toFile());
 		if(path.toFile().exists() && path.toFile().isDirectory()) for(File file : path.toFile().listFiles()) {
 			if(file.getName().startsWith(DOT) || !file.getName().contains(DOT) || file.getName().endsWith(DOT)) continue;
-			String[] nameAndExtension = split(file.getName(), '.'); // For some reason, String.split(".") returns an empty array.
+			String[] nameAndExtension = split(file.getName(), '.');
 			if(EnumLocales.isValisTag(nameAndExtension[0]) && ConfigTypes.isValidExtension(nameAndExtension[1])) {
 				if(localeService.getDefaultReference(container) == null) {
 					createSimpleTranslation(ConfigTypes.getTypeByExtension(nameAndExtension[1]), EnumLocales.find(nameAndExtension[0]));

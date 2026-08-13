@@ -14,7 +14,7 @@ public class ICommandSettings implements CommandSettings {
 	}
 
 	private Optional<CommandPrice> price = Optional.empty();
-	private int delay = 5, cooldown = 10;
+	private int delay, cooldown;
 	String ignoreDelay, ignoreCooldown;
 	private ICommandSettings(){}
 

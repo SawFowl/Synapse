@@ -5,11 +5,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
 import com.velocitypowered.api.command.VelocityBrigadierMessage;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.util.ComponentMessageThrowable;
+
 import sawfowl.synapse.api.utils.TextUtils;
 
 /**
@@ -26,6 +28,10 @@ public class CommandException extends CommandSyntaxException implements Componen
 	public CommandException(Component message) {
 		this(VelocityBrigadierMessage.tooltip(message));
 		this.message = message;
+	}
+
+	public CommandException(String message) {
+		this(TextUtils.deserialize(message));
 	}
 
 	private static final long serialVersionUID = 4626722485860074825L;

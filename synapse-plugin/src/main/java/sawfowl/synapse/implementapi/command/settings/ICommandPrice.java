@@ -13,7 +13,7 @@ public class ICommandPrice implements CommandPrice {
 	}
 
 	private Currency currency;
-	private BigDecimal price;
+	private BigDecimal price = BigDecimal.ZERO;
 	private String ignorePermission;
 	private ICommandPrice() {}
 

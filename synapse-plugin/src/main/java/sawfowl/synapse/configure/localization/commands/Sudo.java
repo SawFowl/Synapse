@@ -1,6 +1,7 @@
 package sawfowl.synapse.configure.localization.commands;
 
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import com.velocitypowered.api.proxy.Player;
 
@@ -21,7 +22,9 @@ public class Sudo implements Translation {
 
 	public Sudo(){}
 
+	@Setting("Fail")
 	private Component fail = deserialize("&cThe player '&e%player%&c' is immune, he cannot be forced to enter anything into the chat.");
+	@Setting("Success")
 	private Component success = deserialize("&aYou forced the player '&e%player%&a' to enter the chat '&e%input%&a'.");
 
 	public Component getFail(Player player) {

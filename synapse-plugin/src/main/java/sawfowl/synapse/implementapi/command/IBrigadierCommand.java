@@ -121,24 +121,18 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		).repeat(1, TimeUnit.SECONDS).schedule();
 	}
 
-	public boolean economyTest(Player player) throws CommandException {
+	public void economyTest(Player player) throws CommandException {
 		var price = settings.getPrice().orElse(null);
-		if(price == null || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return true;
-		if(price.getPrice().doubleValue() < 0) return true;
+		if(price == null || price.getPrice().doubleValue() <= 0 || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return;
 		var currency = price.getCurrency();
 		var account = Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player);
-		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) {
-			exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
-			return false;
-		}
-		return true;
-	
+		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
 	}
 
 	public void economyUse(Player player) throws CommandException {
 		var price = settings.getPrice().orElse(null);
 		if(price == null || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return;
-		if(price.getPrice().doubleValue() < 0) return;
+		if(price.getPrice().doubleValue() <= 0) return;
 		Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player).withdraw(price.getCurrency(), price.getPrice());
 	}
 
@@ -147,7 +141,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	}
 
 	private CommandException exceptionMoney(Locale locale, Currency currency, BigDecimal money) throws CommandException {
-		return new CommandException(SynapsePlugin.getLocales().getAsReferenced(locale).getCommands().getExceptions().getNoMoney(currency, money, command));
+		throw new CommandException(SynapsePlugin.getLocales().getAsReferenced(locale).getCommands().getExceptions().getNoMoney(currency, money, command));
 	}
 
 	private BrigadierCommand createBrigadierCommand() {
@@ -241,14 +235,14 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		return new IBuilder();
 	}
 
-	private boolean testArgsOnExecute(CommandContext<CommandSource> context, String input) {
+	private void testArgsOnExecute(CommandContext<CommandSource> context, String input) throws CommandException {
 		if(input.contains(" ")) {
 			if(getRoot().childs != null) {
 				input = updateInput(new StringBuilder(input.split(" ")[0]), input,getRoot().childs).toString();
 			} else input = input.split(" ")[0];
 		}
 		if(!input.startsWith("/")) input = "/" + input;
-		return testArgsOnExecute(context, new UsageComponentBuilder(input + " "));
+		testArgsOnExecute(context, new UsageComponentBuilder(input + " "));
 	}
 
 	private StringBuilder updateInput(StringBuilder builder, String original, IBrigadierCommand[] childs) {
@@ -268,25 +262,23 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		return builder;
 	}
 
-	private boolean testArgsOnExecute(CommandContext<CommandSource> context, UsageComponentBuilder input) {
-		for(Argument<?> arg : argumentsCollection.getArguments()) if(testArg(cast(arg), context, input)) return true;
-		return false;
+	private void testArgsOnExecute(CommandContext<CommandSource> context, UsageComponentBuilder input) throws CommandException {
+		for(Argument<?> arg : argumentsCollection.getArguments()) testArg(cast(arg), context, input);
 	}
 
-	private boolean testArg(GenericArgumentBuilder<CommandSource, ?, ?> arg, CommandContext<CommandSource> context, UsageComponentBuilder usedAliasAndArgs) {
+	private void testArg(GenericArgumentBuilder<CommandSource, ?, ?> arg, CommandContext<CommandSource> context, UsageComponentBuilder usedAliasAndArgs) throws CommandException {
 		if(!context.getArguments().containsKey(arg.getName())) {
 			if(!arg.isOptional()) {
 				usedAliasAndArgs.setFirst(arg.getUsage().get(context.getSource()).append(Component.newline())).append("&4↳<" + arg.getName() + ">↲");
-				context.getSource().sendMessage(usedAliasAndArgs.component);
-				return true;
+				throw new CommandException(usedAliasAndArgs.component);
 			}
 		} else if(!arg.isAllowed(context, context.getArguments().get(arg.getName()).getResult().toString())){
 			usedAliasAndArgs.setFirst(arg.getUsage().get(context.getSource()).append(Component.newline())).append("&4↳<" + arg.getName() + ">↲");
-			context.getSource().sendMessage(usedAliasAndArgs.component);
-			return true;
+			throw new CommandException(usedAliasAndArgs.component);
 		}
-		usedAliasAndArgs.append(Component.text("[" + arg.getName() + "] "));
-		return false;
+		if(arg.isOptional()) {
+			usedAliasAndArgs.append(Component.text("[" + arg.getName() + "] "));
+		} else usedAliasAndArgs.append(Component.text("<" + arg.getName() + "> "));
 	}
 
 	private IBrigadierCommand setParrent(IBrigadierCommand command) {
@@ -307,8 +299,9 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
 			} else if(argumentsCollection != null) brigadier = context -> {
 				try {
-					if(testArgsOnExecute(context, context.getInput())) return fail();
+					testArgsOnExecute(context, context.getInput());
 					if(context.getSource() instanceof Player player) {
+						economyTest(player);
 						if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
 							if(lastUsed.containsKey(player.getUniqueId())) {
 								if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
@@ -318,7 +311,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 									lastUsed.remove(player.getUniqueId());
 									if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
 										delay(player, context.getInput(), _ -> {
-											if(!economyTest(player)) return fail();
+											economyTest(player);
 											int result = executor.execute(IBrigadierCommand.this, context);
 											if(result != 0) {
 												economyUse(player);
@@ -332,7 +325,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 							} else {
 								if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
 									delay(player, context.getInput(), _ -> {
-										if(!economyTest(player)) return fail();
+										economyTest(player);
 										int result = executor.execute(IBrigadierCommand.this, context);
 										if(result != 0) {
 											economyUse(player);
@@ -342,7 +335,6 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 									});
 									return success();
 								}
-								if(!economyTest(player)) return fail();
 								int result = executor.execute(IBrigadierCommand.this, context);
 								if(result != 0) {
 									economyUse(player);
@@ -350,7 +342,24 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 								}
 								return result;
 							}
+						} else if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+							delay(player, context.getInput(), _ -> {
+								economyTest(player);
+								int result = executor.execute(IBrigadierCommand.this, context);
+								if(result != 0) {
+									economyUse(player);
+									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+								}
+								return result;
+							});
+							return success();
 						}
+						int result = executor.execute(IBrigadierCommand.this, context);
+						if(result != 0) {
+							economyUse(player);
+							lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+						}
+						return result;
 					}
 					return executor.execute(IBrigadierCommand.this, context);
 				} catch (CommandException e) {

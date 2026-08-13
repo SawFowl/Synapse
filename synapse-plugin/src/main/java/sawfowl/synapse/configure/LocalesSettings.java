@@ -19,7 +19,7 @@ public class LocalesSettings {
 	private boolean forcedUse = false;
 	@Setting("Path")
 	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "Path"})
-	private String path = "{SYNAPSE_PATH}";
+	private String path = "{PLUGIN_CONFIG_PATH}";
 
 	public ConfigTypes getType() {
 		return type;

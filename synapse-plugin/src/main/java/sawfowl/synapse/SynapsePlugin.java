@@ -22,18 +22,17 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import sawfowl.synapse.api.Locales;
 import sawfowl.synapse.api.Logger;
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
-import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.ReferencedLocale;
+import sawfowl.synapse.api.services.EconomyService;
 import sawfowl.synapse.commands.Sudo;
 import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
@@ -46,7 +45,7 @@ import sawfowl.synapse.implementapi.services.ILocaleService;
 import sawfowl.synapse.implementapi.services.ILoggerService;
 import sawfowl.synapse.utils.WatchRunner;
 
-@Plugin(id = "synapse", authors = {"SawFowl"})
+@Plugin(id = "synapse", authors = {"SawFowl"}, version = "1.0.0")
 public class SynapsePlugin {
 
 	private static SynapsePlugin instance;
@@ -136,45 +135,6 @@ public class SynapsePlugin {
 			copy = null;
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
-		/*SynapseBrigadierCommand.builder("test", container)
-		.setArguments(
-			Argument.OPTIONAL_PLAYER,
-			Argument.OPTIONAL_SERVER,
-			Argument.createString("TestStringArg", false, "Variant1", "Variant2", "Variant3", "Variant4", "OtherVariant"),
-			Argument.createIntRange("TestIntArg", false, 0, 5)
-		)
-		.setAliases("testalias1", "testalias2", "testalias3")
-		.setSettings(
-			CommandSettings
-			.builder()
-			.setCooldown(5)
-			.build()
-		)
-		.setChilds(
-			SynapseBrigadierCommand
-			.builder("child", container)
-			.setAliases("alias")
-			.setArguments(
-				Argument.createString("TestStringArg", true, "Variant1", "Variant2", "Variant3", "Variant4", "OtherVariant"),
-				Argument.createBoolean("TestBoolArg", false)
-			)
-			.setExecutor((command, context) -> {
-				context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
-				context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
-				context.getSource().sendPlainMessage("Введенный аргумент TestBoolArg -> " + command.<Boolean>getArgument(context, "TestBoolArg").map(i -> i.toString()).orElse("Ничего не введено"));
-				return command.success();
-			})
-			.build()
-		)
-		.setExecutor((command, context) -> {
-			context.getSource().sendPlainMessage("Команда выполнена. " + command.getClass().getName() + " " + context.getInput());
-			context.getSource().sendPlainMessage("Введенный аргумент TestStringArg -> " + command.<String>getArgument(context, "TestStringArg").orElse("Ничего не введено"));
-			context.getSource().sendPlainMessage("Введенный аргумент Player -> " + command.<Player>getArgument(context, "Player").map(Player::getUsername).orElse("Ничего не введено"));
-			context.getSource().sendPlainMessage("Введенный аргумент Server -> " + command.<RegisteredServer>getArgument(context, "Server").map(s -> s.getServerInfo().getName()).orElse("Ничего не введено"));
-			context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
-			return command.success();
-		})
-		.build().register();*/
 		SynapseBrigadierCommand.builder("psudo", container)
 			.canUse(source -> source.hasPermission(Permissions.SUDO))
 			.setAliases("gsudo")
@@ -191,9 +151,8 @@ public class SynapsePlugin {
 	public void onStarted(ProxyInitializeEvent event) {
 		WatchRunner.getInstance().enable();
 		WatchRunner.getInstance().run();
-		Synapse.getProxy().getScheduler().buildTask(this, () -> 
-			ICommandService.getInstance().clearLastUsage()
-		).delay(1, TimeUnit.SECONDS).repeat(5, TimeUnit.SECONDS).schedule();
+		Synapse.getProxy().getScheduler().buildTask(this, () -> ICommandService.getInstance().clearLastUsage()).delay(1, TimeUnit.SECONDS).repeat(5, TimeUnit.SECONDS).schedule();
+		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class)) logger.warn(getLocales().getSystemAsReferenced().getLoggerMessages().getEconomyNotFound());
 	}
 
 	@Subscribe
