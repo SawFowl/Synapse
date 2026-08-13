@@ -47,7 +47,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private ArgumentSupplier variants;
 	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getDefaultNotPresent();
 	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
-	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser) {
+	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate) {
 		this.name = name;
 		this.type = type;
 		this.requirement = requirement;
@@ -56,7 +56,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	}
 
 	public GenericArgumentBuilder<S, A, T> copy() {
-		return new GenericArgumentBuilder<>(name, type, requirement, suggestionsProvider, parser);
+		return new GenericArgumentBuilder<>(name, type, requirement, suggestionsProvider, parser, optional, variants, usage, argumentPredicate);
 	}
 
 	@Override
@@ -211,7 +211,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 		@Override
 		public Builder<T> setArgumentParser(ArgumentParser.Predicate predicate, ArgumentParser<CommandSource, T> parser) {
-			argumentPredicate = predicate;
+			if(predicate != null) argumentPredicate = predicate;
 			return setArgumentParser(parser);
 		}
 
