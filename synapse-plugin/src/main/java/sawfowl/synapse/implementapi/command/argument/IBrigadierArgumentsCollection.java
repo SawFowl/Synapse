@@ -19,6 +19,7 @@ public class IBrigadierArgumentsCollection<S extends CommandSource> implements B
 	private Argument<?>[] arguments = {};
 	private SynapseBrigadierCommand command;
 	public IBrigadierArgumentsCollection(SynapseBrigadierCommand command, Argument<?>... arguments) {
+		this.command = command;
 		if(arguments != null) {
 			this.arguments = arguments;
 			for(Argument<?> arg : arguments) addArg(arg);
