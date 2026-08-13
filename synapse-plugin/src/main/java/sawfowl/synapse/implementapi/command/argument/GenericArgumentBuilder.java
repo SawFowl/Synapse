@@ -45,7 +45,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private ArgumentParser<S, T> parser;
 	private boolean optional = false;
 	private ArgumentSupplier variants;
-	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getDefaultNotPresent();
+	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getNotPresent(name);
 	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
 	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate) {
 		this.name = name;

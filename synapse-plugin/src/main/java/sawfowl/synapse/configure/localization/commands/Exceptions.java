@@ -52,7 +52,7 @@ public class Exceptions implements Translation {
 	private Component delayCancel = deserialize("&cThe execution of the command '/%command%' was canceled because you entered another command.");
 
 	public Component getNotPresent(String key) {
-		return argumentNotPresent.containsKey(key) ? argumentNotPresent.get(key) : argumentNotPresent.get("Other");
+		return argumentNotPresent.containsKey(key) ? argumentNotPresent.get(key) : getDefaultNotPresent();
 	}
 
 	public Component getDefaultNotPresent() {

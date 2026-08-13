@@ -34,6 +34,7 @@ import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.ReferencedLocale;
+import sawfowl.synapse.commands.Sudo;
 import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
 import sawfowl.synapse.implementapi.ISynapse;
@@ -135,7 +136,7 @@ public class SynapsePlugin {
 			copy = null;
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
-		SynapseBrigadierCommand.builder("test", container)
+		/*SynapseBrigadierCommand.builder("test", container)
 		.setArguments(
 			Argument.OPTIONAL_PLAYER,
 			Argument.OPTIONAL_SERVER,
@@ -173,7 +174,17 @@ public class SynapsePlugin {
 			context.getSource().sendPlainMessage("Введенный аргумент TestIntArg -> " + command.<Integer>getArgument(context, "TestIntArg").map(i -> i.toString()).orElse("Ничего не введено"));
 			return command.success();
 		})
-		.build().register();
+		.build().register();*/
+		SynapseBrigadierCommand.builder("psudo", container)
+			.canUse(source -> source.hasPermission(Permissions.SUDO))
+			.setAliases("gsudo")
+			.setExecutor(new Sudo())
+			.setArguments(
+				Argument.PLAYER,
+				Argument.createGreedyString("SpoofChatInput", false)
+			)
+			.build()
+			.register();
 	}
 
 	@Subscribe
