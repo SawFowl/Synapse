@@ -43,7 +43,7 @@ public class IBrigadierArgumentsCollection<S extends CommandSource> implements B
 	}
 
 	private void addArg(Argument<?> arg) {
-		if(args.containsKey(arg.getName())) throw new RuntimeException("");
+		if(args.containsKey(arg.getName())) throw new RuntimeException("The command " + command.getCommand() + " already includes the argument " + arg.getName() + ".");
 		args.put(arg.getName(), arg);
 	}
 
