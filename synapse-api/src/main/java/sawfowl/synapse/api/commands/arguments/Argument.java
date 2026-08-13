@@ -143,6 +143,8 @@ public interface Argument<T> {
 
 		Builder<T> setArgumentParser(ArgumentParser<CommandSource, T> parser);
 
+		Builder<T> setArgumentParser(ArgumentParser.Predicate predicate, ArgumentParser<CommandSource, T> parser);
+
 		/**
 		 * default {@link StringArgumentType#word}
 		 */

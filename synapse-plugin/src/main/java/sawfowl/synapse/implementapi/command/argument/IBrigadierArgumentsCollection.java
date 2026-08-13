@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.CommandSource;
 
+import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.commands.arguments.BrigadierArgumentsCollection;
 
@@ -16,7 +17,8 @@ public class IBrigadierArgumentsCollection<S extends CommandSource> implements B
 
 	private Map<String, Argument<?>> args = new HashMap<String, Argument<?>>();
 	private Argument<?>[] arguments = {};
-	public IBrigadierArgumentsCollection(Argument<?>... arguments) {
+	private SynapseBrigadierCommand command;
+	public IBrigadierArgumentsCollection(SynapseBrigadierCommand command, Argument<?>... arguments) {
 		if(arguments != null) {
 			this.arguments = arguments;
 			for(Argument<?> arg : arguments) addArg(arg);
@@ -26,7 +28,7 @@ public class IBrigadierArgumentsCollection<S extends CommandSource> implements B
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> parse(String key, CommandContext<CommandSource> context) {
-		return args.containsKey(key) ? (Optional<T>) args.get(key).parse(context) : Optional.empty();
+		return args.containsKey(key) && ((GenericArgumentBuilder<S, ?, ?>) args.get(key)).getArgumentPredicate().test(command, context) ? (Optional<T>) args.get(key).parse(context) : Optional.empty();
 	}
 
 	@Override

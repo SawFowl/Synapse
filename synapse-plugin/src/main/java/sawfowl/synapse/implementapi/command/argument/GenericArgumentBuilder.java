@@ -46,6 +46,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private boolean optional = false;
 	private ArgumentSupplier variants;
 	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getDefaultNotPresent();
+	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
 	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser) {
 		this.name = name;
 		this.type = type;
@@ -146,6 +147,10 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		} else if(variant.contains(input)) builder.suggest(variant);
 	}
 
+	public ArgumentParser.Predicate getArgumentPredicate() {
+		return argumentPredicate;
+	}
+
 	private class IBuilder implements Builder<T> {
 
 		@Override
@@ -202,6 +207,12 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 			Objects.requireNonNull(supplier);
 			usage = supplier;
 			return this;
+		}
+
+		@Override
+		public Builder<T> setArgumentParser(ArgumentParser.Predicate predicate, ArgumentParser<CommandSource, T> parser) {
+			argumentPredicate = predicate;
+			return setArgumentParser(parser);
 		}
 
 	}

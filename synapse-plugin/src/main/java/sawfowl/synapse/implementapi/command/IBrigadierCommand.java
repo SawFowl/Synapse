@@ -392,7 +392,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		@Override
 		public Builder setArguments(Argument<?>... arguments) {
 			Objects.requireNonNull(arguments);
-			IBrigadierCommand.this.argumentsCollection = new IBrigadierArgumentsCollection<CommandSource>(arguments);
+			IBrigadierCommand.this.argumentsCollection = new IBrigadierArgumentsCollection<CommandSource>(IBrigadierCommand.this, arguments);
 			return this;
 		}
 
