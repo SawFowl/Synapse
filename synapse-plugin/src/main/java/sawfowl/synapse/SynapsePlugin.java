@@ -36,6 +36,8 @@ import sawfowl.synapse.api.services.EconomyService;
 import sawfowl.synapse.commands.Callback;
 import sawfowl.synapse.commands.ProxyInfo;
 import sawfowl.synapse.commands.Sudo;
+import sawfowl.synapse.commands.Tell;
+import sawfowl.synapse.configure.Commands;
 import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
 import sawfowl.synapse.implementapi.ISynapse;
@@ -58,6 +60,7 @@ public class SynapsePlugin {
 	private static ILocalesList<LocaleConfig> locales;
 	private static Logger logger;
 	private static long serverStartedTime;
+	private ReferencedConfig<Commands> commands;
 
 	@Inject
 	public SynapsePlugin(ProxyServer server, @DataDirectory Path dataDirectory, PluginContainer container) {
@@ -139,9 +142,11 @@ public class SynapsePlugin {
 			copy = null;
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
-		SynapseBrigadierCommand.builder("psudo", container)
+		commands = Synapse.getConfigurationService().createReferencedConfig(container, Commands.class).setName("Commands").setType(getConfig().getConfigSettings(container).getType()).setPath(dataDirectory).build();
+		SynapseBrigadierCommand.builder("proxysudo", container)
 			.canUse(source -> source.hasPermission(Permissions.SUDO))
-			.setAliases("gsudo")
+			.setAliases(getCommands().getProxysudo().getAliases())
+			.setSettings(getCommands().getProxysudo().getSettings())
 			.setExecutor(new Sudo())
 			.setArguments(
 				Argument.PLAYER,
@@ -150,11 +155,11 @@ public class SynapsePlugin {
 			.build()
 			.register();
 		SynapseBrigadierCommand.builder("callback", container)
-			.setArguments(Argument.createString("CallbackId", false))
+			.setArguments(Argument.createString("CallbackId", false, true))
 			.setExecutor(new Callback())
 			.setChilds(
 				SynapseBrigadierCommand.builder("page", container)
-					.setArguments(Argument.createString("Page", false))
+					.setArguments(Argument.createString("Page", false, true))
 					.setExecutor(new Callback.Pagination())
 					.build()
 			)
@@ -162,8 +167,30 @@ public class SynapsePlugin {
 			.register();
 		SynapseBrigadierCommand.builder("proxyinfo", container)
 			.canUse(source -> source.hasPermission(Permissions.PROXYINFO))
-			.setAliases("pinfo", "ginfo")
+			.setAliases(getCommands().getProxyinfo().getAliases())
+			.setSettings(getCommands().getProxyinfo().getSettings())
 			.setExecutor(new ProxyInfo())
+			.build()
+			.register();
+		SynapseBrigadierCommand.builder("proxytell", container)
+			//.canUse(source -> source.hasPermission(Permissions.TELL))
+			.setAliases(getCommands().getProxytell().getAliases())
+			.setSettings(getCommands().getProxytell().getSettings())
+			.setChilds(
+				SynapseBrigadierCommand.builder("console", container)
+					.canUse(source -> source instanceof Player)
+					.setSettings(getCommands().getProxytell().getSettings())
+					.setArguments(
+						Argument.createComponent("Message", false)
+					)
+					.setExecutor(new Tell.Console())
+					.build()
+			)
+			.setArguments(
+				Argument.PLAYER,
+				Argument.createComponent("Message", false)
+			)
+			.setExecutor(new Tell())
 			.build()
 			.register();
 	}
@@ -228,6 +255,10 @@ public class SynapsePlugin {
 
 	public static long getServerUptime() {
 		return (System.currentTimeMillis() - serverStartedTime) / 1000;
+	}
+
+	public Commands getCommands() {
+		return commands.get();
 	}
 
 }

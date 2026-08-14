@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.velocitypowered.api.proxy.Player;
 
+import sawfowl.synapse.api.ResourceKey;
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.economy.Account;
 import sawfowl.synapse.api.economy.Currency;
@@ -28,6 +29,10 @@ public interface EconomyService {
 	Account getOrCreateAccount(String name);
 
 	UniqueAccount getOrCreateUniqueAccount(UUID uuid, String name);
+
+	default Optional<Currency> getCurrency(ResourceKey key) {
+		return getCurrencies().stream().filter(c -> c.getKey().equals(key)).findFirst();
+	}
 
 	default UniqueAccount getOrCreateUniqueAccount(Player player) {
 		return getOrCreateUniqueAccount(player.getGameProfile().getId(), player.getGameProfile().getName());

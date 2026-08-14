@@ -14,7 +14,7 @@ public class ICommandSettings implements CommandSettings {
 	}
 
 	private Optional<CommandPrice> price = Optional.empty();
-	private int delay, cooldown;
+	private long delay, cooldown;
 	String ignoreDelay, ignoreCooldown;
 	private ICommandSettings(){}
 
@@ -61,13 +61,13 @@ public class ICommandSettings implements CommandSettings {
 		}
 
 		@Override
-		public Builder setDelay(int delay) {
+		public Builder setDelay(long delay) {
 			ICommandSettings.this.delay = delay;
 			return this;
 		}
 
 		@Override
-		public Builder setCooldown(int cooldown) {
+		public Builder setCooldown(long cooldown) {
 			ICommandSettings.this.cooldown = cooldown;
 			return this;
 		}

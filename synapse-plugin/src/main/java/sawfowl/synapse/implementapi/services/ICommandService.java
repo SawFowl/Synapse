@@ -84,7 +84,7 @@ public class ICommandService implements CommandService {
 			GenericArgumentBuilder.<Player>builder()
 				.setName("Player")
 				.setArgumentParser(arg -> Synapse.getProxy().getAllPlayers().stream().filter(p -> p.getUsername().equals(arg.getResult().toString())).findFirst())
-				.setVariants(_ -> Synapse.getProxy().getAllPlayers().stream().map(Player::getUsername).toArray(String[]::new))
+				.setVariants(false, _ -> Synapse.getProxy().getAllPlayers().stream().map(Player::getUsername).toArray(String[]::new))
 				.build()
 		);
 		defaultArguments.put(
@@ -92,7 +92,7 @@ public class ICommandService implements CommandService {
 			GenericArgumentBuilder.<RegisteredServer>builder()
 				.setName("Server")
 				.setArgumentParser(arg -> Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(arg.getResult().toString())).findFirst())
-				.setVariants(_ -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).toArray(String[]::new))
+				.setVariants(false, _ -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).toArray(String[]::new))
 				.build()
 		);
 		defaultArguments.put(

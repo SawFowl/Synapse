@@ -56,9 +56,9 @@ public interface CommandSettings {
 
 		Builder setPrice(CommandPrice price);
 
-		Builder setDelay(int delay);
+		Builder setDelay(long delay);
 
-		Builder setCooldown(int cooldown);
+		Builder setCooldown(long cooldown);
 
 		Builder setIgnoreDelay(String permission);
 

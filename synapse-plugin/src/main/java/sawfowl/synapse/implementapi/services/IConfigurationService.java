@@ -29,6 +29,9 @@ import com.google.gson.JsonPrimitive;
 import com.velocitypowered.api.plugin.PluginContainer;
 
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
+import sawfowl.synapse.api.ResourceKey;
+import sawfowl.synapse.api.commands.settings.CommandPrice;
+import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.LocalisedComment;
 import sawfowl.synapse.api.config.builders.ConfigBuilder;
@@ -42,12 +45,15 @@ import sawfowl.synapse.implementapi.config.builders.IReferencedBuilder;
 import sawfowl.synapse.implementapi.config.builders.IReferencedVirtualBuilder;
 import sawfowl.synapse.implementapi.config.builders.IVirtualConfigBuilder;
 import sawfowl.synapse.implementapi.config.loaders.TomlConfigurationLoader;
-import sawfowl.synapse.implementapi.config.serializers.ConfigTypeSerializer;
 import sawfowl.synapse.implementapi.config.serializers.SimpleDateFormatSerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonArraySerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonElementSerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonObjectSerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonPrimitiveSerializer;
+import sawfowl.synapse.implementapi.config.serializers.synapse.CommandPriceSerializer;
+import sawfowl.synapse.implementapi.config.serializers.synapse.CommandSettingsSerializer;
+import sawfowl.synapse.implementapi.config.serializers.synapse.ConfigTypeSerializer;
+import sawfowl.synapse.implementapi.config.serializers.synapse.ResourceKeySerializer;
 
 public class IConfigurationService implements ConfigurationService {
 
@@ -60,7 +66,20 @@ public class IConfigurationService implements ConfigurationService {
 	private IConfigurationService() {}
 
 	private final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addProcessor(LocalisedComment.class, LocalisedCommentFactory.INSTANCE).addNodeResolver(NodeResolver.onlyWithSetting()).build();
-	private final TypeSerializerCollection DEFAULT = TypeSerializerCollection.defaults().childBuilder().registerAnnotatedObjects(FACTORY).register(SimpleDateFormat.class, SimpleDateFormatSerializer.INSTANCE).register(ConfigTypes.class, ConfigTypeSerializer.INSTANCE).register(JsonElement.class, JsonElementSerializer.INSTANCE).register(JsonObject.class, JsonObjectSerializer.INSTANCE).register(JsonArray.class, JsonArraySerializer.INSTANCE).register(JsonPrimitive.class, JsonPrimitiveSerializer.INSTANCE).registerAll(ConfigurateComponentSerializer.configurate().serializers()).build();
+	private final TypeSerializerCollection DEFAULT = TypeSerializerCollection.defaults()
+			.childBuilder()
+			.registerAnnotatedObjects(FACTORY)
+			.register(SimpleDateFormat.class, SimpleDateFormatSerializer.INSTANCE)
+			.register(ConfigTypes.class, ConfigTypeSerializer.INSTANCE)
+			.register(JsonElement.class, JsonElementSerializer.INSTANCE)
+			.register(JsonObject.class, JsonObjectSerializer.INSTANCE)
+			.register(JsonArray.class, JsonArraySerializer.INSTANCE)
+			.register(JsonPrimitive.class, JsonPrimitiveSerializer.INSTANCE)
+			.registerAll(ConfigurateComponentSerializer.configurate().serializers())
+			.register(ResourceKey.class, ResourceKeySerializer.INSTANCE)
+			.register(CommandPrice.class, CommandPriceSerializer.INSTANCE)
+			.register(CommandSettings.class, CommandSettingsSerializer.INSTANCE)
+			.build();
 
 	public TypeSerializerCollection getSerializers() {
 		return DEFAULT;

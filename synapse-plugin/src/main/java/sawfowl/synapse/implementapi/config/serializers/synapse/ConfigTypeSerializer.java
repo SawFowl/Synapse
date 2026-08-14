@@ -1,4 +1,4 @@
-package sawfowl.synapse.implementapi.config.serializers;
+package sawfowl.synapse.implementapi.config.serializers.synapse;
 
 import java.lang.reflect.Type;
 

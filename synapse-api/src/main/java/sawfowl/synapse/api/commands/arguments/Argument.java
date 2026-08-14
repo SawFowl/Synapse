@@ -81,26 +81,26 @@ public interface Argument<T> {
 				.setName(name)
 				.setType(BoolArgumentType.bool())
 				.setArgumentParser(arg -> cast(arg.getResult()))
-				.setVariants(_ -> BOOLEAN_VARIANTS)
+				.setVariants(false, _ -> BOOLEAN_VARIANTS)
 				.build();
 	}
 
-	static Argument<String> createString(String name, boolean optional, String... variants) {
+	static Argument<String> createString(String name, boolean optional, boolean allowAny, String... variants) {
 		return Argument.<String>builder()
 			.setName(name)
 			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(arg.getResult().toString()) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
 			.setOptional(optional)
-			.setVariants(_ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : variants)
+			.setVariants(allowAny, _ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : variants)
 			.build();
 	}
 
-	static Argument<ResourceKey> createResourceKey(String name, boolean optional, ResourceKey... variants) {
+	static Argument<ResourceKey> createResourceKey(String name, boolean optional, boolean allowAny, ResourceKey... variants) {
 		return Argument.<ResourceKey>builder()
 			.setName(name)
 			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(ResourceKey.tryParse(arg.getResult().toString())) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
 			.setOptional(optional)
 			.setType(StringArgumentType.string())
-			.setVariants(_ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : Stream.of(variants).map(ResourceKey::asQuotedString).toArray(String[]::new))
+			.setVariants(allowAny, _ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : Stream.of(variants).map(ResourceKey::asQuotedString).toArray(String[]::new))
 			.build();
 	}
 
@@ -156,7 +156,7 @@ public interface Argument<T> {
 
 		Builder<T> setOptional(boolean value);
 
-		Builder<T> setVariants(ArgumentSupplier variants);
+		Builder<T> setVariants(boolean allowAny, ArgumentSupplier variants);
 
 		Builder<T> setUsage(UsageSupplier supplier);
 

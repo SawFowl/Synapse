@@ -238,24 +238,24 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	private void testArgsOnExecute(CommandContext<CommandSource> context, String input) throws CommandException {
 		if(input.contains(" ")) {
 			if(getRoot().childs != null) {
-				input = updateInput(new StringBuilder(input.split(" ")[0]), input,getRoot().childs).toString();
+				input = updateInput(context.getSource(), new StringBuilder(input.split(" ")[0]), input,getRoot().childs).toString();
 			} else input = input.split(" ")[0];
 		}
 		if(!input.startsWith("/")) input = "/" + input;
 		testArgsOnExecute(context, new UsageComponentBuilder(input + " "));
 	}
 
-	private StringBuilder updateInput(StringBuilder builder, String original, IBrigadierCommand[] childs) {
+	private StringBuilder updateInput(CommandSource source, StringBuilder builder, String original, IBrigadierCommand[] childs) {
 		for(IBrigadierCommand child : childs) {
 			if(original.startsWith(builder.toString() + " " + child.getCommand())) {
+				if(!child.canUse.test(source)) continue;
 				builder.append(" " + child.getCommand());
-				return child.childs != null ? updateInput(builder, original, child.childs) : builder;
-			} else {
-				for(String childAlias : child.aliases) {
-					if(original.startsWith(builder.toString() + " " + childAlias)) {
-						builder.append(" " + childAlias);
-						return child.childs != null ? updateInput(builder, original, child.childs) : builder;
-					}
+				return child.childs != null ? updateInput(source, builder, original, child.childs) : builder;
+			} else for(String childAlias : child.aliases) {
+				if(original.startsWith(builder.toString() + " " + childAlias)) {
+					if(!child.canUse.test(source)) continue;
+					builder.append(" " + childAlias);
+					return child.childs != null ? updateInput(source, builder, original, child.childs) : builder;
 				}
 			}
 		}
@@ -297,9 +297,9 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		public SynapseBrigadierCommand build() {
 			if(executor == null) {
 				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
-			} else if(argumentsCollection != null) brigadier = context -> {
+			} else brigadier = context -> {
 				try {
-					testArgsOnExecute(context, context.getInput());
+					if(argumentsCollection != null) testArgsOnExecute(context, context.getInput());
 					if(context.getSource() instanceof Player player) {
 						economyTest(player);
 						if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {

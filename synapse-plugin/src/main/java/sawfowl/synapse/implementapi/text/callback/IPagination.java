@@ -2,15 +2,14 @@ package sawfowl.synapse.implementapi.text.callback;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import sawfowl.synapse.api.text.callback.Pagination;
@@ -22,6 +21,7 @@ public class IPagination implements Pagination {
 	private Component padding;
 	private Component bottom = Component.empty();
 	private Component content;
+	private Collection<? extends Component> components = Collections.emptyList();
 	private int size;
 	private int pages;
 	private IPagination(){}
@@ -56,30 +56,19 @@ public class IPagination implements Pagination {
 
 		@Override
 		public Builder header(Component header) {
-			if(padding != null) {
-				int headerLength = length(header) + 2;
-				Component part = padding;
-				while((length(part) * 2) + headerLength < 53) {
-					part = part.append(padding);
-				}
-				IPagination.this.header = part.append(Component.text(" ").append(header).append(Component.text(" "))).append(part);
-			} else IPagination.this.header = header;
+			IPagination.this.header = header;
 			return this;
 		}
 
 		@Override
 		public Builder padding(char padding, TextColor color) {
 			IPagination.this.padding = Component.text(padding).color(color);
-			if(header != null) header(header);
 			return this;
 		}
 
 		@Override
 		public Builder content(Collection<? extends Component> components) {
-			double p = (double) components.size() / (double) size;
-			pages = components.size() / size;
-			if(((double) pages) < p) pages++;
-			content(components, 1, IPagination.this);
+			IPagination.this.components = components;
 			return this;
 		}
 
@@ -123,13 +112,13 @@ public class IPagination implements Pagination {
 				Component part = Component.empty();
 				Component back = Component.text("<<").color(padding.color());
 				Component nextpage = Component.text(">>").color(padding.color());
-				if(previous != null) back = back.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> previous.sendTo(s)));
-				if(next != null) nextpage = nextpage.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> next.sendTo(s)));
+				if(previous != null) back = back.color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> previous.sendTo(s)));
+				if(next != null) nextpage = nextpage.color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> next.sendTo(s)));
 				back = Component.text(" ").append(back).append(Component.text(" "));
 				nextpage = Component.text(" ").append(nextpage).append(Component.text(" "));
 				Component current = Component.text(page).color(pageColor(padding.color())).append(Component.text("/").color(NamedTextColor.WHITE)).append(Component.text(pages).color(pagesColor(padding.color())));
 				Component listing = Component.empty().append(back).append(current).append(nextpage);
-				for(int i = 0; i < 35 - length(listing) ; i++) part = part.append(padding);
+				for(int i = 0; i < 33 - length(listing) ; i++) part = part.append(padding);
 				bottom = bottom.append(part).append(listing).append(part);
 			}
 			
@@ -137,6 +126,19 @@ public class IPagination implements Pagination {
 
 		@Override
 		public Pagination build() {
+			if(padding != null) {
+				int headerLength = length(header) + 2;
+				Component part = padding;
+				while((length(part) * 2) + headerLength < 51) {
+					part = part.append(padding);
+				}
+				IPagination.this.header = part.append(Component.text(" ").append(header).append(Component.text(" "))).append(part);
+			}
+			double p = (double) components.size() / (double) size;
+			pages = components.size() / size;
+			if(((double) pages) < p) pages++;
+			content(components, 1, IPagination.this);
+			components = Collections.emptyList();
 			return IPagination.this;
 		}
 

@@ -38,7 +38,6 @@ public class Callback extends AbstractCommand {
 			if(!optCallback.isPresent()) exception(getExceptions(source).getPageNotExist());
 			optCallback.get().accept(source);
 		}
-
 	}
 
 }

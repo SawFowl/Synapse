@@ -31,9 +31,9 @@ public class ProxyInfo implements Translation {
 		info.java = info.deserialize("&aJava&f: &e%java%");
 		info.javaHome = info.deserialize("&aJava home&f: &e%home%");
 		info.velocityVersion = info.deserialize("&aВерсия Velocity&f: &e%version%");
-		info.plugins = info.deserialize("&eПлагинов&f: &b%plugins%&e");
-		info.servers = info.deserialize("&eСерверов&f: &b%servers%&e");
-		info.players = info.deserialize("&eИгроков&f: &b%players%&e");
+		info.plugins = info.deserialize("&aПлагинов&f: &e%plugins%&e");
+		info.servers = info.deserialize("&aСерверов&f: &e%servers%&e");
+		info.players = info.deserialize("&aИгроков&f: &e%players%&e");
 		info.max = info.deserialize("&aМаксимум(JVM) RAM&f: &e%max%Mb");
 		info.allocated = info.deserialize("&aВыделено RAM&f: &e%allocated%Mb");
 		info.utilised = info.deserialize("&aИспользуется RAM&f: &e%utilised%Mb(&6%allocated%%&e от выделенной, &6%max%%&e от максимума)");
@@ -58,11 +58,11 @@ public class ProxyInfo implements Translation {
 	@Setting("VelocityVersion")
 	private Component velocityVersion = deserialize("&aVelocity version&f: &e%version%");
 	@Setting("Plugins")
-	private Component plugins = deserialize("&ePlugins&f: &b%plugins%&e");
+	private Component plugins = deserialize("&aPlugins&f: &e%plugins%&e");
 	@Setting("Servers")
-	private Component servers = deserialize("&eServers&f: &b%servers%&e");
+	private Component servers = deserialize("&aServers&f: &e%servers%&e");
 	@Setting("Players")
-	private Component players = deserialize("&ePlayers&f: &b%players%&e");
+	private Component players = deserialize("&aPlayers&f: &e%players%&e");
 	@Setting("MemoryMax")
 	private Component max = deserialize("&aMax(JVM) RAM&f: &e%max%Mb");
 	@Setting("MemoryAllocated")

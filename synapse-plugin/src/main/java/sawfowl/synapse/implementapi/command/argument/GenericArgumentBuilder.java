@@ -47,6 +47,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private ArgumentSupplier variants;
 	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getNotPresent(name);
 	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
+	private boolean allowAny;
 	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate) {
 		this.name = name;
 		this.type = type;
@@ -126,6 +127,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	}
 
 	private boolean testVariant(String[] variants, String input) {
+		if(variants.length == 0 && allowAny) return true;
 		for(String var : variants) if(var.equals(input)) return true;
 		return false;
 	}
@@ -195,8 +197,9 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		}
 
 		@Override
-		public Builder<T> setVariants(ArgumentSupplier variants) {
+		public Builder<T> setVariants(boolean allowAny, ArgumentSupplier variants) {
 			Objects.requireNonNull(variants);
+			GenericArgumentBuilder.this.allowAny = allowAny;
 			GenericArgumentBuilder.this.variants = variants;
 			GenericArgumentBuilder.this.setSuggestionProvider();
 			return this;
