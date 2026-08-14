@@ -29,8 +29,8 @@ public class Exceptions implements Translation {
 		exceptions.cooldown = exceptions.deserialize("&cВам нужно подождать %time% прежде чем вы снова сможете использовать эту команду.");
 		exceptions.noMoney = exceptions.deserialize("&cЧтобы выполнить команду '/%command%', на вашем балансе должно быть не менее %currency%%money%.");
 		exceptions.delayCancel = exceptions.deserialize("&cОтменено выполнение команды '/%command%' так как вы ввели другую команду.");
-		exceptions.callAfterRemoval = exceptions.deserialize("&cЗапрошенное действие более не доступно. Некоторые действия можно запросить только 1 раз. Остальные доступны в течение 10 минут.");
-		exceptions.pageNotExist = exceptions.deserialize("&cСтраница более недоступна. Страницы доступны только в течении 10 минут после создания.");
+		exceptions.callAfterRemoval = exceptions.deserialize("&cЗапрошенное действие не доступно или не верно указан идентификатор. Некоторые действия можно запросить только 1 раз. Остальные доступны в течение 10 минут.");
+		exceptions.pageNotExist = exceptions.deserialize("&cСтраница недоступна или не верно указан идентификатор. Страницы доступны только в течении 10 минут после создания.");
 		exceptions.targetSelf = exceptions.deserialize("&cВы не можете указывать на себя.");
 		return exceptions;
 	}
@@ -54,9 +54,9 @@ public class Exceptions implements Translation {
 	@Setting("DelayCancel")
 	private Component delayCancel = deserialize("&cThe execution of the command '/%command%' was canceled because you entered another command.");
 	@Setting("CallAfterRemoval")
-	private Component callAfterRemoval = deserialize("&cThe requested action is no longer available. Some actions can only be requested once. The rest are available within 10 minutes.");
+	private Component callAfterRemoval = deserialize("&cThe requested action is not available or the identifier is specified incorrectly. Some actions can only be requested once. The rest are available within 10 minutes.");
 	@Setting("PageNotExist")
-	private Component pageNotExist = deserialize("&cThe page is no longer available. The pages are only available for 10 minutes after creation.");
+	private Component pageNotExist = deserialize("&cThe requested page is not available or the identifier is specified incorrectly. The pages are only available for 10 minutes after creation.");
 	@Setting("TargetSelf")
 	private Component targetSelf = deserialize("&cYou can't point to yourself.");
 
