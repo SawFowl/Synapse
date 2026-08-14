@@ -18,7 +18,6 @@ import sawfowl.synapse.api.services.LocaleService;
 import sawfowl.synapse.api.services.LoggerService;
 import sawfowl.synapse.api.services.PlaceholderService;
 import sawfowl.synapse.api.services.ServiceProvider;
-import sawfowl.synapse.implementapi.text.callback.ICallbackService;
 
 public class IServiceProvider implements ServiceProvider {
 

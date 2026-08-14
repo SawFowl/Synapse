@@ -12,8 +12,9 @@ import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import sawfowl.synapse.api.text.callback.Callback;
+
 import sawfowl.synapse.api.text.callback.Pagination;
+import sawfowl.synapse.implementapi.services.ICallbackService;
 
 public class IPagination implements Pagination {
 
@@ -122,8 +123,8 @@ public class IPagination implements Pagination {
 				Component part = Component.empty();
 				Component back = Component.text("<<").color(padding.color());
 				Component nextpage = Component.text(">>").color(padding.color());
-				if(previous != null) back = back.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(Callback.of(s -> previous.sendTo(s)));
-				if(next != null) nextpage = nextpage.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(Callback.of(s -> next.sendTo(s)));
+				if(previous != null) back = back.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> previous.sendTo(s)));
+				if(next != null) nextpage = nextpage.style(Style.style(TextDecoration.UNDERLINED)).color(invertColor(padding.color())).clickEvent(ICallbackService.getInstance().paginationOf(s -> next.sendTo(s)));
 				back = Component.text(" ").append(back).append(Component.text(" "));
 				nextpage = Component.text(" ").append(nextpage).append(Component.text(" "));
 				Component current = Component.text(page).color(pageColor(padding.color())).append(Component.text("/").color(NamedTextColor.WHITE)).append(Component.text(pages).color(pagesColor(padding.color())));

@@ -32,4 +32,6 @@ public interface CallbackSevice {
 
 	Optional<Consumer<CommandSource>> getCallback(String uuid, CommandSource source);
 
+	Optional<Consumer<CommandSource>> getPagination(String uuid, CommandSource source);
+
 }

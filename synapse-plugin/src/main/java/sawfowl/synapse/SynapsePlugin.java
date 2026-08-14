@@ -33,12 +33,14 @@ import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.ReferencedLocale;
 import sawfowl.synapse.api.services.EconomyService;
+import sawfowl.synapse.commands.Callback;
 import sawfowl.synapse.commands.Sudo;
 import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
 import sawfowl.synapse.implementapi.ISynapse;
 import sawfowl.synapse.implementapi.InjectorAPI;
 import sawfowl.synapse.implementapi.config.locale.ILocalesList;
+import sawfowl.synapse.implementapi.services.ICallbackService;
 import sawfowl.synapse.implementapi.services.ICommandService;
 import sawfowl.synapse.implementapi.services.IConfigurationService;
 import sawfowl.synapse.implementapi.services.ILocaleService;
@@ -145,6 +147,17 @@ public class SynapsePlugin {
 			)
 			.build()
 			.register();
+		SynapseBrigadierCommand.builder("callback", container)
+			.setArguments(Argument.createString("CallbackId", false))
+			.setExecutor(new Callback())
+			.setChilds(
+				SynapseBrigadierCommand.builder("page", container)
+					.setArguments(Argument.createString("Page", false))
+					.setExecutor(new Callback.Pagination())
+					.build()
+			)
+			.build()
+			.register();
 	}
 
 	@Subscribe
@@ -152,6 +165,7 @@ public class SynapsePlugin {
 		WatchRunner.getInstance().enable();
 		WatchRunner.getInstance().run();
 		Synapse.getProxy().getScheduler().buildTask(this, () -> ICommandService.getInstance().clearLastUsage()).delay(1, TimeUnit.SECONDS).repeat(5, TimeUnit.SECONDS).schedule();
+		Synapse.getProxy().getScheduler().buildTask(this, () -> ICallbackService.getInstance().clearOld()).delay(10, TimeUnit.SECONDS).repeat(1, TimeUnit.MINUTES).schedule();
 		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class)) logger.warn(getLocales().getSystemAsReferenced().getLoggerMessages().getEconomyNotFound());
 	}
 

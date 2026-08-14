@@ -28,6 +28,10 @@ import sawfowl.synapse.api.utils.TextUtils;
 
 public interface Argument<T> {
 
+	public static String[] EMPTY_VARIANTS = {};
+
+	public static String[] BOOLEAN_VARIANTS = {"true", "false"};
+
 	static Argument<Player> PLAYER = CommandService.get().getArgument("Player", false);
 
 	static Argument<RegisteredServer> SERVER = CommandService.get().getArgument("Server", false);
@@ -77,26 +81,26 @@ public interface Argument<T> {
 				.setName(name)
 				.setType(BoolArgumentType.bool())
 				.setArgumentParser(arg -> cast(arg.getResult()))
-				.setVariants(_ -> new String[]{"true", "false"})
+				.setVariants(_ -> BOOLEAN_VARIANTS)
 				.build();
 	}
 
 	static Argument<String> createString(String name, boolean optional, String... variants) {
 		return Argument.<String>builder()
 			.setName(name)
-			.setArgumentParser(arg -> Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
+			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(arg.getResult().toString()) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
 			.setOptional(optional)
-			.setVariants(_ -> variants)
+			.setVariants(_ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : variants)
 			.build();
 	}
 
 	static Argument<ResourceKey> createResourceKey(String name, boolean optional, ResourceKey... variants) {
 		return Argument.<ResourceKey>builder()
 			.setName(name)
-			.setArgumentParser(arg -> Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
+			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(ResourceKey.tryParse(arg.getResult().toString())) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
 			.setOptional(optional)
 			.setType(StringArgumentType.string())
-			.setVariants(_ -> Stream.of(variants).map(ResourceKey::asQuotedString).toArray(String[]::new))
+			.setVariants(_ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : Stream.of(variants).map(ResourceKey::asQuotedString).toArray(String[]::new))
 			.build();
 	}
 
@@ -163,7 +167,7 @@ public interface Argument<T> {
 		try {
 			return Optional.ofNullable((T) object);
 		} catch (Exception e) {
-			return null;
+			return Optional.empty();
 		}
 	}
 
