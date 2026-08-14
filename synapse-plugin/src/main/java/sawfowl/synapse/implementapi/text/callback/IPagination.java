@@ -84,7 +84,7 @@ public class IPagination implements Pagination {
 					} else content = i > 1 ? content.append(component).appendNewline() : content.append(component);
 					i--;
 				}
-				createFooter(page == 1 ? null : previous, next(copy, IPagination.this, page + 1), page);
+				createFooter(page == 1 ? null : previous, copy.isEmpty() ? null : next(copy, IPagination.this, page + 1), page);
 			} else {
 				content = Component.join(JoinConfiguration.newlines(), components);
 				createFooter(pages > 1 ? previous : null, null, page);

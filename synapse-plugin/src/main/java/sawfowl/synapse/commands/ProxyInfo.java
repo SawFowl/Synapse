@@ -42,15 +42,15 @@ public class ProxyInfo extends AbstractCommand {
 			getCommands(locale).getProxyInfo().getSystem(this.os),
 			getCommands(locale).getProxyInfo().getJava(java),
 			getCommands(locale).getProxyInfo().getJavaHome(javaHome),
-			getCommands(locale).getProxyInfo().getVelocityVersion(Synapse.getProxy().getVersion().getVersion()),
 			getServerTime(locale),
 			getUptime(locale),
-
+			Component.empty(),
 			getCommands(locale).getProxyInfo().getMax(max),
 			getCommands(locale).getProxyInfo().getAllocated(total),
 			getCommands(locale).getProxyInfo().getUtilised(utilised, (utilised * 100)/total, (utilised * 100)/max),
 			getCommands(locale).getProxyInfo().getFree(Runtime.getRuntime().freeMemory() / 1024 / 1024),
-
+			Component.empty(),
+			getCommands(locale).getProxyInfo().getVelocityVersion(Synapse.getProxy().getVersion().getVersion()),
 			getCommands(locale).getProxyInfo().getPlugins(Synapse.getProxy().getPluginManager().getPlugins().size()),
 			getCommands(locale).getProxyInfo().getServers(Synapse.getProxy().getAllServers().size()),
 			getCommands(locale).getProxyInfo().getPlayers(Synapse.getProxy().getPlayerCount())
