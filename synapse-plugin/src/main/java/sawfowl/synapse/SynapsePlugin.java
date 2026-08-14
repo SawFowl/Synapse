@@ -173,7 +173,7 @@ public class SynapsePlugin {
 			.build()
 			.register();
 		SynapseBrigadierCommand.builder("proxytell", container)
-			//.canUse(source -> source.hasPermission(Permissions.TELL))
+			.canUse(source -> source.hasPermission(Permissions.TELL))
 			.setAliases(getCommands().getProxytell().getAliases())
 			.setSettings(getCommands().getProxytell().getSettings())
 			.setChilds(
