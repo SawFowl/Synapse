@@ -143,7 +143,7 @@ public class SynapsePlugin {
 		}
 		new InjectorAPI(new ISynapse(server)).createInjector();
 		commands = Synapse.getConfigurationService().createReferencedConfig(container, Commands.class).setName("Commands").setType(getConfig().getConfigSettings(container).getType()).setPath(dataDirectory).build();
-		SynapseBrigadierCommand.builder("proxysudo", container)
+		if(getCommands().getProxysudo().isEnable()) SynapseBrigadierCommand.builder("proxysudo", container)
 			.canUse(source -> source.hasPermission(Permissions.SUDO))
 			.setAliases(getCommands().getProxysudo().getAliases())
 			.setSettings(getCommands().getProxysudo().getSettings())
@@ -165,14 +165,14 @@ public class SynapsePlugin {
 			)
 			.build()
 			.register();
-		SynapseBrigadierCommand.builder("proxyinfo", container)
+		if(getCommands().getProxyinfo().isEnable()) SynapseBrigadierCommand.builder("proxyinfo", container)
 			.canUse(source -> source.hasPermission(Permissions.PROXYINFO))
 			.setAliases(getCommands().getProxyinfo().getAliases())
 			.setSettings(getCommands().getProxyinfo().getSettings())
 			.setExecutor(new ProxyInfo())
 			.build()
 			.register();
-		SynapseBrigadierCommand.builder("proxytell", container)
+		if(getCommands().getProxytell().isEnable()) SynapseBrigadierCommand.builder("proxytell", container)
 			.canUse(source -> source.hasPermission(Permissions.TELL))
 			.setAliases(getCommands().getProxytell().getAliases())
 			.setSettings(getCommands().getProxytell().getSettings())

@@ -19,6 +19,8 @@ public class CommandConfig {
 	private CommandSettings settings;
 	@Setting("Aliases")
 	private String[] aliases;
+	@Setting("Enable")
+	private boolean enable = true;
 
 	public CommandSettings getSettings() {
 		return settings;
@@ -26,6 +28,9 @@ public class CommandConfig {
 
 	public String[] getAliases() {
 		return aliases;
+	}
+	public boolean isEnable() {
+		return enable;
 	}
 
 }
