@@ -7,6 +7,7 @@ import com.velocitypowered.api.proxy.Player;
 
 import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand.ParameterizedExecutor;
+import sawfowl.synapse.configure.localization.Time;
 import sawfowl.synapse.configure.localization.commands.Commands;
 import sawfowl.synapse.configure.localization.commands.Exceptions;
 
@@ -34,6 +35,10 @@ public abstract class AbstractCommand implements ParameterizedExecutor {
 
 	protected Exceptions getExceptions(CommandSource commandSource) {
 		return getCommands(commandSource).getExceptions();
+	}
+
+	protected Time getTime(Locale locale) {
+		return SynapsePlugin.getLocales().getAsReferenced(locale).getTime();
 	}
 
 }

@@ -34,6 +34,7 @@ import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.ReferencedLocale;
 import sawfowl.synapse.api.services.EconomyService;
 import sawfowl.synapse.commands.Callback;
+import sawfowl.synapse.commands.ProxyInfo;
 import sawfowl.synapse.commands.Sudo;
 import sawfowl.synapse.configure.Config;
 import sawfowl.synapse.configure.localization.LocaleConfig;
@@ -56,6 +57,7 @@ public class SynapsePlugin {
 	private static PluginContainer container;
 	private static ILocalesList<LocaleConfig> locales;
 	private static Logger logger;
+	private static long serverStartedTime;
 
 	@Inject
 	public SynapsePlugin(ProxyServer server, @DataDirectory Path dataDirectory, PluginContainer container) {
@@ -158,6 +160,12 @@ public class SynapsePlugin {
 			)
 			.build()
 			.register();
+		SynapseBrigadierCommand.builder("proxyinfo", container)
+			.canUse(source -> source.hasPermission(Permissions.PROXYINFO))
+			.setAliases("pinfo", "ginfo")
+			.setExecutor(new ProxyInfo())
+			.build()
+			.register();
 	}
 
 	@Subscribe
@@ -167,6 +175,7 @@ public class SynapsePlugin {
 		Synapse.getProxy().getScheduler().buildTask(this, () -> ICommandService.getInstance().clearLastUsage()).delay(1, TimeUnit.SECONDS).repeat(5, TimeUnit.SECONDS).schedule();
 		Synapse.getProxy().getScheduler().buildTask(this, () -> ICallbackService.getInstance().clearOld()).delay(10, TimeUnit.SECONDS).repeat(1, TimeUnit.MINUTES).schedule();
 		if(!Synapse.getInstance().getServiceProvider().isExist(EconomyService.class)) logger.warn(getLocales().getSystemAsReferenced().getLoggerMessages().getEconomyNotFound());
+		serverStartedTime = System.currentTimeMillis();
 	}
 
 	@Subscribe
@@ -215,6 +224,10 @@ public class SynapsePlugin {
 
 	public static Logger getLogger() {
 		return logger;
+	}
+
+	public static long getServerUptime() {
+		return (System.currentTimeMillis() - serverStartedTime) / 1000;
 	}
 
 }
