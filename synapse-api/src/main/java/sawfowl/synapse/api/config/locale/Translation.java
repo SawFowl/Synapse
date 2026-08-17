@@ -1,7 +1,11 @@
 package sawfowl.synapse.api.config.locale;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -75,6 +79,16 @@ public interface Translation {
 	@SuppressWarnings("unchecked")
 	default <T> T[] array(T... objects) {
 		return objects;
+	}
+
+	@SuppressWarnings("unchecked")
+	default <T> Set<T> asSet(T... objects) {
+		return new HashSet<T>() {{for(T obj : objects) add(obj);}};
+	}
+
+	@SuppressWarnings("unchecked")
+	default <T> List<T> asList(T... objects) {
+		return Arrays.asList(objects);
 	}
 
 	private Component replace(Component component, Map<String, String> map) {

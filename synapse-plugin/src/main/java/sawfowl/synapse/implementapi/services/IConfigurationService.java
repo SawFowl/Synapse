@@ -2,6 +2,7 @@ package sawfowl.synapse.implementapi.services;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
@@ -50,6 +51,7 @@ import sawfowl.synapse.implementapi.config.serializers.json.JsonArraySerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonElementSerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonObjectSerializer;
 import sawfowl.synapse.implementapi.config.serializers.json.JsonPrimitiveSerializer;
+import sawfowl.synapse.implementapi.config.serializers.synapse.BigDecimalSerializer;
 import sawfowl.synapse.implementapi.config.serializers.synapse.CommandPriceSerializer;
 import sawfowl.synapse.implementapi.config.serializers.synapse.CommandSettingsSerializer;
 import sawfowl.synapse.implementapi.config.serializers.synapse.ConfigTypeSerializer;
@@ -79,6 +81,7 @@ public class IConfigurationService implements ConfigurationService {
 			.register(ResourceKey.class, ResourceKeySerializer.INSTANCE)
 			.register(CommandPrice.class, CommandPriceSerializer.INSTANCE)
 			.register(CommandSettings.class, CommandSettingsSerializer.INSTANCE)
+			.register(BigDecimal.class, BigDecimalSerializer.INSTANCE)
 			.build();
 
 	public TypeSerializerCollection getSerializers() {

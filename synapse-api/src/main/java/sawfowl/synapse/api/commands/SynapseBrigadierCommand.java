@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
-
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.plugin.PluginContainer;
 
@@ -76,6 +76,8 @@ public interface SynapseBrigadierCommand {
 	 * These settings are used only if the player executes the command.
 	 */
 	CommandSettings getSettings();
+
+	LiteralCommandNode<CommandSource> getCommandNode();
 
 	/**
 	 * Parsing an argument and getting its value.

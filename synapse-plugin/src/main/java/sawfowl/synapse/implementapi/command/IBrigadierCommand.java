@@ -63,6 +63,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	private IBrigadierCommand parrent;
 	private CommandSettings settings = ICommandSettings.DEFAULT;
 	private Map<UUID, UsedResult> lastUsed = new HashMap<>();
+	private BrigadierCommand brigadierCommand;
 
 	private IBrigadierCommand() {}
 
@@ -96,7 +97,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		if(brigadier == null && (childs == null || childs.length == 0)) return this;
 		Synapse.getProxy().getCommandManager().register(
 			Synapse.getProxy().getCommandManager().metaBuilder(command).plugin(container).aliases(aliases).build(),
-			createBrigadierCommand()
+			brigadierCommand == null ? brigadierCommand = createBrigadierCommand() : brigadierCommand
 		);
 		((ICommandService) CommandService.get()).register(this);
 		return this;
@@ -112,6 +113,11 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	@Override
 	public CommandSettings getSettings() {
 		return settings;
+	}
+
+	@Override
+	public LiteralCommandNode<CommandSource> getCommandNode() {
+		return brigadierCommand.getNode();
 	}
 
 	public void delay(Player player, String input, ThrowingConsumer<IBrigadierCommand, CommandException> consumer) throws CommandException {
