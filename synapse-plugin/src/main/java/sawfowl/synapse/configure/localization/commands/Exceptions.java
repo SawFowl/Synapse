@@ -32,6 +32,7 @@ public class Exceptions implements Translation {
 		exceptions.callAfterRemoval = exceptions.deserialize("&cЗапрошенное действие не доступно или не верно указан идентификатор. Некоторые действия можно запросить только 1 раз. Остальные доступны в течение 10 минут.");
 		exceptions.pageNotExist = exceptions.deserialize("&cСтраница недоступна или не верно указан идентификатор. Страницы доступны только в течении 10 минут после создания.");
 		exceptions.targetSelf = exceptions.deserialize("&cВы не можете указывать на себя.");
+		exceptions.messageNotPresent = exceptions.deserialize("&cВы не ввели сообщение.");
 		return exceptions;
 	}
 
@@ -59,6 +60,8 @@ public class Exceptions implements Translation {
 	private Component pageNotExist = deserialize("&cThe requested page is not available or the identifier is specified incorrectly. The pages are only available for 10 minutes after creation.");
 	@Setting("TargetSelf")
 	private Component targetSelf = deserialize("&cYou can't point to yourself.");
+	@Setting("MessageNotPresent")
+	private Component messageNotPresent = deserialize("&cYou didn't enter the message.");
 
 	public Component getNotPresent(String key) {
 		return argumentNotPresent.containsKey(key) ? argumentNotPresent.get(key) : getDefaultNotPresent();
@@ -90,6 +93,10 @@ public class Exceptions implements Translation {
 
 	public Component getTargetSelf() {
 		return targetSelf;
+	}
+
+	public Component getMessageNotPresent() {
+		return messageNotPresent;
 	}
 
 }

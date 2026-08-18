@@ -33,6 +33,7 @@ import sawfowl.synapse.api.config.ReferencedConfig;
 import sawfowl.synapse.api.config.locale.LocalesList;
 import sawfowl.synapse.api.config.locale.ReferencedLocale;
 import sawfowl.synapse.api.services.EconomyService;
+import sawfowl.synapse.commands.Broadcast;
 import sawfowl.synapse.commands.Callback;
 import sawfowl.synapse.commands.ProxyInfo;
 import sawfowl.synapse.commands.Sudo;
@@ -191,6 +192,14 @@ public class SynapsePlugin {
 				Argument.createComponent("Message", false)
 			)
 			.setExecutor(new Tell())
+			.build()
+			.register();
+		if(getCommands().getBroadcast().isEnable()) SynapseBrigadierCommand.builder("proxybroadcast", container)
+			.canUse(source -> source.hasPermission(Permissions.BROADCAST))
+			.setAliases(getCommands().getBroadcast().getAliases())
+			.setSettings(getCommands().getBroadcast().getSettings())
+			.setArguments(Argument.createComponent("Message", false))
+			.setExecutor(new Broadcast())
 			.build()
 			.register();
 	}

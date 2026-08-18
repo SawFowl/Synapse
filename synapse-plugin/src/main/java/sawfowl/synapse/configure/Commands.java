@@ -14,6 +14,8 @@ public class Commands {
 	private CommandConfig proxyinfo = new CommandConfig("proxyinfo", "pinfo", "ginfo");
 	@Setting("proxytell")
 	private CommandConfig proxytell = new CommandConfig("proxytell", "ptell", "gtell");
+	@Setting("proxybroadcast")
+	private CommandConfig broadcast = new CommandConfig("globalbroadcast", "broadcast");
 
 	public CommandConfig getProxysudo() {
 		return proxysudo;
@@ -25,6 +27,10 @@ public class Commands {
 
 	public CommandConfig getProxytell() {
 		return proxytell;
+	}
+
+	public CommandConfig getBroadcast() {
+		return broadcast;
 	}
 
 

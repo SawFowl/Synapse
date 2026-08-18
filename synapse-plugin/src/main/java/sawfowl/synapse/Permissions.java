@@ -6,6 +6,7 @@ public class Permissions {
 	public static final String SUDO_IGNORE = "synapse.command.sudo.ignore";
 	public static final String PROXYINFO = "synapse.command.proxyinfo";
 	public static final String TELL = "synapse.command.tell";
+	public static final String BROADCAST = "synapse.command.broadcast";
 
 	private static final String IGNORE_COOLDOWN = "synapse.commands.ignore.cooldown.";
 	private static final String IGNORE_DELAY = "synapse.commands.ignore.delay.";
