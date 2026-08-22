@@ -1,7 +1,9 @@
 package sawfowl.synapse.implementapi.command;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +14,7 @@ import java.util.stream.Stream;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -157,17 +160,60 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 			for(var child : childs) {
 				var childCommand = child.createBrigadierCommand();
 				root.then(childCommand.getNode());
-				if(child.getAliases() != null) for(String alias : child.getAliases()) {
-					root.then(createAliasNode(alias, childCommand.getNode()));
+				if(child.getAliases() != null) {
+					for(String alias : child.getAliases()) {
+						root.then(createAliasNode(alias, childCommand.getNode()));
+					}
 				}
 			}
 		}
-		if(argumentsCollection != null && argumentsCollection.getArguments() != null && argumentsCollection.getArguments().length > 0) {
+		if(argumentsCollection != null && argumentsCollection.getArguments() != null && 
+			argumentsCollection.getArguments().length > 0) {
+			var args = argumentsCollection.getArguments();
+			List<Argument<?>> requiredArgs = new ArrayList<>();
+			List<Argument<?>> optionalArgs = new ArrayList<>();
+			Argument<?> greedyArg = null;
+			var hasGreedy = false;
+			for(var arg : args) {
+				if(isGreedyStringArgument(cast(arg))) {
+					if(!hasGreedy) {
+						greedyArg = arg;
+						hasGreedy = true;
+					} else {
+						SynapsePlugin.getLogger().error("You cannot register more than one greedy string argument!");
+					}
+				} else if(arg.isOptional()) {
+					optionalArgs.add(arg);
+				} else {
+					requiredArgs.add(arg);
+				}
+			}
+			if(hasGreedy && greedyArg != null) {
+				var lastArg = args[args.length - 1];
+				if(!isGreedyStringArgument(cast(lastArg))) {
+					throw new IllegalArgumentException("Greedy string argument must be the last argument");
+				}
+			}
 			GenericArgumentBuilder<CommandSource, ?, ?> deepest = null;
 			GenericArgumentBuilder<CommandSource, ?, ?> current = null;
-			for(int i = argumentsCollection.getArguments().length - 1; i >= 0; i--) {
-				var arg = argumentsCollection.getArguments()[i];
-				var builder = cast(arg).copy().setCommand(brigadier);
+			if(hasGreedy && greedyArg != null) {
+				deepest = cast(greedyArg).copy().setCommand(brigadier);
+				current = deepest;
+			}
+			for(int i = optionalArgs.size() - 1; i >= 0; i--) {
+				var builder = cast(optionalArgs.get(i)).copy().setCommand(brigadier);
+				if(deepest == null) {
+					deepest = builder;
+					current = builder;
+				} else {
+					var skipBranch = current.copy().executes(context -> executor.execute(this, context));
+					builder.then(current);
+					builder.then(skipBranch);
+					current = builder;
+				}
+			}
+			for(int i = requiredArgs.size() - 1; i >= 0; i--) {
+				var builder = cast(requiredArgs.get(i)).copy().setCommand(brigadier);
 				if(deepest == null) {
 					deepest = builder;
 					current = builder;
@@ -176,9 +222,13 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 					current = builder;
 				}
 			}
-			root.then(current);
+			if(current != null) root.then(current);
 		}
 		return new BrigadierCommand(root);
+	}
+
+	private boolean isGreedyStringArgument(GenericArgumentBuilder<CommandSource, ?, ?> arg) {
+		return arg.getType() instanceof StringArgumentType string && string.getType() == StringArgumentType.greedyString().getType();
 	}
 
 	private CommandNode<CommandSource> createAliasNode(String alias, CommandNode<CommandSource> originalNode) {
@@ -252,34 +302,56 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	}
 
 	private StringBuilder updateInput(CommandSource source, StringBuilder builder, String original, IBrigadierCommand[] childs) {
-		for(IBrigadierCommand child : childs) {
+		for(var child : childs) {
 			if(original.startsWith(builder.toString() + " " + child.getCommand())) {
 				if(!child.canUse.test(source)) continue;
 				builder.append(" " + child.getCommand());
 				return child.childs != null ? updateInput(source, builder, original, child.childs) : builder;
-			} else for(String childAlias : child.aliases) {
-				if(original.startsWith(builder.toString() + " " + childAlias)) {
-					if(!child.canUse.test(source)) continue;
-					builder.append(" " + childAlias);
-					return child.childs != null ? updateInput(source, builder, original, child.childs) : builder;
-				}
+			} else for(var childAlias : child.aliases) if(original.startsWith(builder.toString() + " " + childAlias)) {
+				if(!child.canUse.test(source)) continue;
+				builder.append(" " + childAlias);
+				return child.childs != null ? updateInput(source, builder, original, child.childs) : builder;
 			}
 		}
 		return builder;
 	}
 
 	private void testArgsOnExecute(CommandContext<CommandSource> context, UsageComponentBuilder input) throws CommandException {
-		for(Argument<?> arg : argumentsCollection.getArguments()) testArg(cast(arg), context, input);
+		var sortedArgs = new ArrayList<Argument<?>>();
+		var optionalArgs = new ArrayList<Argument<?>>();
+		for(var arg : argumentsCollection.getArguments()) if(arg.isOptional()) {
+			optionalArgs.add(arg);
+		} else sortedArgs.add(arg);
+		sortedArgs.addAll(optionalArgs);
+		optionalArgs.clear();
+		optionalArgs = null;
+		for(var arg : sortedArgs) testArg(cast(arg), context, input, sortedArgs);
+		sortedArgs.clear();
+		sortedArgs = null;
 	}
 
-	private void testArg(GenericArgumentBuilder<CommandSource, ?, ?> arg, CommandContext<CommandSource> context, UsageComponentBuilder usedAliasAndArgs) throws CommandException {
+	private void testArg(GenericArgumentBuilder<CommandSource, ?, ?> arg, CommandContext<CommandSource> context, UsageComponentBuilder usedAliasAndArgs, List<Argument<?>> sorted) throws CommandException {
 		if(!context.getArguments().containsKey(arg.getName())) {
 			if(!arg.isOptional()) {
 				usedAliasAndArgs.setFirst(arg.getUsage().get(context.getSource()).append(Component.newline())).append("&4↳<" + arg.getName() + ">↲");
+				if(!sorted.isEmpty()) for(var other : sorted) if(other != arg && sorted.indexOf(other) > sorted.indexOf(arg)) {
+					if(other.isOptional()) {
+						usedAliasAndArgs.append(Component.text(" [" + other.getName() + "]"));
+					} else usedAliasAndArgs.append(Component.text(" <" + other.getName() + ">"));
+				}
+				sorted.clear();
+				sorted = null;
 				throw new CommandException(usedAliasAndArgs.component);
 			}
-		} else if(!arg.isAllowed(context, context.getArguments().get(arg.getName()).getResult().toString())){
+		} else if(!arg.isAllowed(context, context.getArguments().get(arg.getName()).getResult().toString()) && !arg.isOptional()){
 			usedAliasAndArgs.setFirst(arg.getUsage().get(context.getSource()).append(Component.newline())).append("&4↳<" + arg.getName() + ">↲");
+			if(!sorted.isEmpty()) for(var other : sorted) if(other != arg && sorted.indexOf(other) > sorted.indexOf(arg)) {
+				if(other.isOptional()) {
+					usedAliasAndArgs.append(Component.text(" [" + other.getName() + "]"));
+				} else usedAliasAndArgs.append(Component.text(" <" + other.getName() + ">"));
+			}
+			sorted.clear();
+			sorted = null;
 			throw new CommandException(usedAliasAndArgs.component);
 		}
 		if(arg.isOptional()) {

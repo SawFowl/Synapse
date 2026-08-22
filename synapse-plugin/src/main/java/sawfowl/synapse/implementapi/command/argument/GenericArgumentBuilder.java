@@ -126,6 +126,10 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		return usage;
 	}
 
+	public ArgumentType<?> getType() {
+		return type;
+	}
+
 	private boolean testVariant(String[] variants, String input) {
 		if(variants.length == 0 && allowAny) return true;
 		for(String var : variants) if(var.equals(input)) return true;
@@ -147,6 +151,11 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 		if(input.isEmpty()) {
 			builder.suggest(variant);
 		} else if(variant.contains(input)) builder.suggest(variant);
+	}
+
+	@Override
+	public String toString() {
+		return "GenericArgumentBuilder [name=" + name + "]";
 	}
 
 	public ArgumentParser.Predicate getArgumentPredicate() {
