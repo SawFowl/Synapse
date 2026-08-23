@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -13,6 +15,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.CommandNode;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
@@ -138,6 +141,8 @@ public interface Argument<T> {
 	<E extends T> Optional<E> parse(CommandContext<CommandSource> context);
 
 	boolean isOptional();
+
+	@Nullable CommandNode<CommandSource> asCommandNode();
 
 	interface Builder<T> extends AbstractBuilder<Argument<T>> {
 

@@ -206,9 +206,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 					deepest = builder;
 					current = builder;
 				} else {
-					var skipBranch = current.copy().executes(context -> executor.execute(this, context));
 					builder.then(current);
-					builder.then(skipBranch);
 					current = builder;
 				}
 			}
@@ -369,61 +367,36 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		return this;
 	}
 
-	private class IBuilder implements Builder {
-
-		@Override
-		public SynapseBrigadierCommand build() {
-			if(executor == null) {
-				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
-			} else brigadier = context -> {
-				try {
-					if(argumentsCollection != null) testArgsOnExecute(context, context.getInput());
-					if(context.getSource() instanceof Player player) {
-						economyTest(player);
-						if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
-							if(lastUsed.containsKey(player.getUniqueId())) {
-								if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
-									player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
-									return fail();
-								} else {
-									lastUsed.remove(player.getUniqueId());
-									if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
-										delay(player, context.getInput(), _ -> {
-											economyTest(player);
-											int result = executor.execute(IBrigadierCommand.this, context);
-											if(result != 0) {
-												economyUse(player);
-												lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-											}
-											return result;
-										});
-										return success();
+	private int runCommand(CommandContext<CommandSource> context) {
+		try {
+			if(argumentsCollection != null) testArgsOnExecute(context, context.getInput());
+			if(context.getSource() instanceof Player player) {
+				economyTest(player);
+				if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
+					if(lastUsed.containsKey(player.getUniqueId())) {
+						if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
+							player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
+							return fail();
+						} else {
+							lastUsed.remove(player.getUniqueId());
+							if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+								delay(player, context.getInput(), _ -> {
+									economyTest(player);
+									int result = executor.execute(this, context);
+									if(result != 0) {
+										economyUse(player);
+										lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
 									}
-								}
-							} else {
-								if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
-									delay(player, context.getInput(), _ -> {
-										economyTest(player);
-										int result = executor.execute(IBrigadierCommand.this, context);
-										if(result != 0) {
-											economyUse(player);
-											lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-										}
-										return result;
-									});
-									return success();
-								}
-								int result = executor.execute(IBrigadierCommand.this, context);
-								if(result != 0) {
-									economyUse(player);
-									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-								}
-								return result;
+									return result;
+								});
+								return success();
 							}
-						} else if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+						}
+					} else {
+						if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
 							delay(player, context.getInput(), _ -> {
 								economyTest(player);
-								int result = executor.execute(IBrigadierCommand.this, context);
+								int result = executor.execute(this, context);
 								if(result != 0) {
 									economyUse(player);
 									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
@@ -432,19 +405,46 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 							});
 							return success();
 						}
-						int result = executor.execute(IBrigadierCommand.this, context);
+						int result = executor.execute(this, context);
 						if(result != 0) {
 							economyUse(player);
 							lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
 						}
 						return result;
 					}
-					return executor.execute(IBrigadierCommand.this, context);
-				} catch (CommandException e) {
-					context.getSource().sendMessage(e.componentMessage());
-					return fail();
+				} else if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+					delay(player, context.getInput(), _ -> {
+						economyTest(player);
+						int result = executor.execute(this, context);
+						if(result != 0) {
+							economyUse(player);
+							lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+						}
+						return result;
+					});
+					return success();
 				}
-			};
+				int result = executor.execute(this, context);
+				if(result != 0) {
+					economyUse(player);
+					lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+				}
+				return result;
+			}
+			return executor.execute(this, context);
+		} catch (CommandException e) {
+			context.getSource().sendMessage(e.componentMessage());
+			return fail();
+		}
+	}
+
+	private class IBuilder implements Builder {
+
+		@Override
+		public SynapseBrigadierCommand build() {
+			if(executor == null) {
+				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
+			} else brigadier = context -> runCommand(context);
 			return IBrigadierCommand.this;
 		}
 
@@ -506,7 +506,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 
 	}
 
-	private record UsedResult(int result, long time) {}
+	private record UsedResult(int result, long time){}
 
 	private class UsageComponentBuilder {
 
@@ -531,6 +531,5 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 		}
 
 	}
-
 
 }

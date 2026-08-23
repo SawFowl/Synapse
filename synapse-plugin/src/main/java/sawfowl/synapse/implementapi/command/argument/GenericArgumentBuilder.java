@@ -48,6 +48,7 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private UsageSupplier usage = source -> SynapsePlugin.getLocales().getAsReferenced(source).getCommands().getExceptions().getNotPresent(name);
 	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
 	private boolean allowAny;
+	private CommandNode<S> node;
 	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate) {
 		this.name = name;
 		this.type = type;
@@ -72,9 +73,9 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 
 	@Override
 	public CommandNode<S> build() {
-		var result = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider);
-		for(final CommandNode<S> argument : getArguments()) result.addChild(argument);
-		return result;
+		node = new ArgumentCommandNode<>(name, type, command, requirement, getRedirect(), getRedirectModifier(), isFork(), suggestionsProvider);
+		for(final CommandNode<S> argument : getArguments()) node.addChild(argument);
+		return node;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -112,6 +113,12 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	public Argument<?> setOptional() {
 		optional = true;
 		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public CommandNode<CommandSource> asCommandNode() {
+		return (CommandNode<CommandSource>) node;
 	}
 
 	public String[] getVariants(CommandContext<CommandSource> context) {
