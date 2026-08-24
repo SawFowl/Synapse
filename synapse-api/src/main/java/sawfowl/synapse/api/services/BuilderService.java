@@ -9,6 +9,8 @@ import net.kyori.adventure.builder.AbstractBuilder;
 import sawfowl.synapse.api.Synapse;
 
 /**
+ * In this service, you can register your own object collectors for your plugin.
+ * 
  * @author SawFowl
  */
 public interface BuilderService {

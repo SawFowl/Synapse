@@ -59,7 +59,7 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	private PluginContainer container;
 	private String[] aliases = {};
 	private ParameterizedExecutor executor;
-	private Command<CommandSource> brigadier;
+	private Command<CommandSource> brigadier = context -> runCommand(context);
 	private BrigadierArgumentsCollection<CommandSource> argumentsCollection;
 	private Predicate<CommandSource> canUse = _ -> true;
 	private IBrigadierCommand[] childs;
@@ -97,10 +97,9 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 
 	@Override
 	public SynapseBrigadierCommand register() {
-		if(brigadier == null && (childs == null || childs.length == 0)) return this;
 		Synapse.getProxy().getCommandManager().register(
 			Synapse.getProxy().getCommandManager().metaBuilder(command).plugin(container).aliases(aliases).build(),
-			brigadierCommand == null ? brigadierCommand = createBrigadierCommand() : brigadierCommand
+			brigadierCommand
 		);
 		((ICommandService) CommandService.get()).register(this);
 		return this;
@@ -442,9 +441,10 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 
 		@Override
 		public SynapseBrigadierCommand build() {
-			if(executor == null) {
-				if(childs == null || childs.length == 0) throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
-			} else brigadier = context -> runCommand(context);
+			if(executor == null && (childs == null || childs.length == 0)) {
+				throw new RuntimeException(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getExecutorNotAssigned(command));
+			}
+			brigadierCommand = createBrigadierCommand();
 			return IBrigadierCommand.this;
 		}
 

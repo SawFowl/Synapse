@@ -14,6 +14,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
+
 import com.velocitypowered.api.command.CommandSource;
 
 import sawfowl.synapse.SynapsePlugin;

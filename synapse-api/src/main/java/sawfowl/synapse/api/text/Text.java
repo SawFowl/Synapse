@@ -11,6 +11,9 @@ import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.PlaceholderService;
 import sawfowl.synapse.api.services.PlaceholderService.DefaultPlaceholderKeys;
 
+/**
+ * @author SawFowl
+ */
 public interface Text {
 
 	private static Builder builder() {

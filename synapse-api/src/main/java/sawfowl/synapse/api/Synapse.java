@@ -1,5 +1,7 @@
 package sawfowl.synapse.api;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.google.inject.Inject;
 
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -12,11 +14,17 @@ import sawfowl.synapse.api.services.LocaleService;
 import sawfowl.synapse.api.services.PlaceholderService;
 import sawfowl.synapse.api.services.ServiceProvider;
 
+/**
+ * @author SawFowl
+ */
 public abstract class Synapse {
 
-	@Inject
-	private static Synapse INSTANCE;
+	@Inject private static Synapse INSTANCE;
 
+	/**
+	 * It will be `null` if your plugin loads before Synapse.
+	 */
+	@Nullable 
 	public static Synapse getInstance() {
 		return INSTANCE;
 	}

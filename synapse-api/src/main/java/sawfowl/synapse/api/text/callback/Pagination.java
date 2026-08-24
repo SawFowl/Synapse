@@ -8,8 +8,16 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import sawfowl.synapse.api.Synapse;
 
+/**
+ * Using this interface, you can create multi‑page menus in the chat.
+ * 
+ * @author SawFowl
+ */
 public interface Pagination {
 
+	/**
+	 * @param linesPerPage - Do not specify a value less than 1. This may cause a failure.
+	 */
 	static Builder builder(int linesPerPage) {
 		return Synapse.getBuilderService().get(Builder.class).setLinesPerPage(linesPerPage);
 	}

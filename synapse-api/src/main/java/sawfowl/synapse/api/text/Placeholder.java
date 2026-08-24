@@ -4,6 +4,9 @@ import org.jetbrains.annotations.Nullable;
 
 import net.kyori.adventure.text.Component;
 
+/**
+ * @author SawFowl
+ */
 @FunctionalInterface
 public interface Placeholder<T> {
 

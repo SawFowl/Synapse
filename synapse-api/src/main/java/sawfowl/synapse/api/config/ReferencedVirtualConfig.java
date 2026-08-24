@@ -8,6 +8,11 @@ import org.spongepowered.configurate.reference.ValueReference;
 
 import com.google.gson.JsonElement;
 
+/**
+ * This configuration variant is not saved to disk by default.
+ * 
+ * @author SawFowl
+ */
 public interface ReferencedVirtualConfig<T> extends VirtualConfig {
 
 	ReferencedVirtualConfig<T> loadFromRaw(String rawData);

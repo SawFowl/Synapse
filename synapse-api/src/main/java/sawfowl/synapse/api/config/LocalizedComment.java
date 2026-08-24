@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface LocalisedComment {
+public @interface LocalizedComment {
 
 	/**
 	 * Path to the localisation configuration section containing the string with the required comment.

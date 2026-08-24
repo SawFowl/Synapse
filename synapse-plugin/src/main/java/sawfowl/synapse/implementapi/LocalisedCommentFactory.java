@@ -6,15 +6,15 @@ import org.spongepowered.configurate.CommentedConfigurationNodeIntermediary;
 import org.spongepowered.configurate.objectmapping.meta.Processor;
 import org.spongepowered.configurate.objectmapping.meta.Processor.Factory;
 
-import sawfowl.synapse.api.config.LocalisedComment;
+import sawfowl.synapse.api.config.LocalizedComment;
 import sawfowl.synapse.implementapi.services.ILocaleService;
 
-public class LocalisedCommentFactory implements Factory<LocalisedComment, Object> {
+public class LocalisedCommentFactory implements Factory<LocalizedComment, Object> {
 
 	public static final LocalisedCommentFactory INSTANCE = new LocalisedCommentFactory();
 
 	@Override
-	public Processor<Object> make(LocalisedComment data, Type type) {
+	public Processor<Object> make(LocalizedComment data, Type type) {
 		return (_, destination) -> {
 			if (destination instanceof CommentedConfigurationNodeIntermediary<?> node) {
 				if(node.comment() != null && !node.comment().isEmpty()) return;

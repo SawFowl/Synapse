@@ -10,6 +10,8 @@ import sawfowl.synapse.api.config.locale.Translation;
 
 /**
  * The main API for working with localizations. Using this interface, you can register your collection of localizations for your plugin.
+ * 
+ * @author SawFowl
  */
 public interface LocaleService {
 

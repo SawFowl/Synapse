@@ -4,6 +4,9 @@ import net.kyori.adventure.text.Component;
 import sawfowl.synapse.api.services.LoggerService;
 import sawfowl.synapse.api.text.Text;
 
+/**
+ * @author SawFowl
+ */
 public interface Logger {
 
 	static Logger createApacheLogger(String name) {

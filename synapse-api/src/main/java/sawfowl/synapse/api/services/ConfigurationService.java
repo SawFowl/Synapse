@@ -22,6 +22,8 @@ import sawfowl.synapse.api.config.builders.ReferencedVirtualConfigBuilder;
 import sawfowl.synapse.api.config.builders.VirtualConfigBuilder;
 
 /**
+ * This service provides access to configuration builders for your plugin.
+ * 
  * @author SawFowl
  */
 public interface ConfigurationService {

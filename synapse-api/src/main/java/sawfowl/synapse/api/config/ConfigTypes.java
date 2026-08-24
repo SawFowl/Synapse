@@ -2,6 +2,9 @@ package sawfowl.synapse.api.config;
 
 import java.util.stream.Stream;
 
+/**
+ * @author SawFowl
+ */
 public enum ConfigTypes {
 
 	HOCON(".conf") {
@@ -109,21 +112,7 @@ public enum ConfigTypes {
 		public String getTypeName() {
 			return "Toml";
 		}
-		@Override
-		public boolean comparableType(ConfigTypes other) {
-			return other == this || other == YAML;
-		}
 	},
-	/**PROPERTIES(".properties") {
-		@Override
-		public String toString() {
-			return ".properties";
-		}
-		@Override
-		public String getExtension() {
-			return "properties";
-		}
-	}*/
 	UNKNOWN(""){
 		@Override
 		public String getTypeName() {
@@ -132,7 +121,7 @@ public enum ConfigTypes {
 
 	};
 
-	ConfigTypes(String string) {}
+	private ConfigTypes(String string){}
 
 	public String getExtension() {
 		return "";

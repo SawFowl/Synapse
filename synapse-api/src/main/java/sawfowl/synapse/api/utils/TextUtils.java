@@ -14,6 +14,9 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import sawfowl.synapse.api.text.Text;
 import sawfowl.synapse.api.text.callback.Callback;
 
+/**
+ * @author SawFowl
+ */
 public class TextUtils {
 
 	/**

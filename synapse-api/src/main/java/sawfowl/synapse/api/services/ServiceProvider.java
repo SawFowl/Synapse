@@ -5,6 +5,9 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+/**
+ * @author SawFowl
+ */
 public interface ServiceProvider {
 
 	/**

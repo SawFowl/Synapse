@@ -34,7 +34,7 @@ import sawfowl.synapse.api.ResourceKey;
 import sawfowl.synapse.api.commands.settings.CommandPrice;
 import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.config.ConfigTypes;
-import sawfowl.synapse.api.config.LocalisedComment;
+import sawfowl.synapse.api.config.LocalizedComment;
 import sawfowl.synapse.api.config.builders.ConfigBuilder;
 import sawfowl.synapse.api.config.builders.ReferencedConfigBuilder;
 import sawfowl.synapse.api.config.builders.ReferencedVirtualConfigBuilder;
@@ -67,7 +67,7 @@ public class IConfigurationService implements ConfigurationService {
 
 	private IConfigurationService() {}
 
-	private final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addProcessor(LocalisedComment.class, LocalisedCommentFactory.INSTANCE).addNodeResolver(NodeResolver.onlyWithSetting()).build();
+	private final ObjectMapper.Factory FACTORY = ObjectMapper.factoryBuilder().addProcessor(LocalizedComment.class, LocalisedCommentFactory.INSTANCE).addNodeResolver(NodeResolver.onlyWithSetting()).build();
 	private final TypeSerializerCollection DEFAULT = TypeSerializerCollection.defaults()
 			.childBuilder()
 			.registerAnnotatedObjects(FACTORY)

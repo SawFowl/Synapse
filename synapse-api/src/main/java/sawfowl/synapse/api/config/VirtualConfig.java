@@ -11,6 +11,11 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import io.leangen.geantyref.TypeToken;
 
+/**
+ * This configuration variant is not saved to disk by default.
+ * 
+ * @author SawFowl
+ */
 public interface VirtualConfig {
 
 	VirtualConfig loadFromRaw(String rawData);

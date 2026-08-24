@@ -12,6 +12,9 @@ import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import io.leangen.geantyref.TypeToken;
 
+/**
+ * @author SawFowl
+ */
 public interface Config {
 
 	/**

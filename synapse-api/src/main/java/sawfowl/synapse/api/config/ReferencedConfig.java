@@ -4,6 +4,9 @@ import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.reference.ConfigurationReference;
 import org.spongepowered.configurate.reference.ValueReference;
 
+/**
+ * @author SawFowl
+ */
 public interface ReferencedConfig<T> extends Config {
 
 	/**

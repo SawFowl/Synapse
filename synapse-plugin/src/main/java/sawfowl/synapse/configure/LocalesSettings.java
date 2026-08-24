@@ -4,7 +4,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
 import sawfowl.synapse.api.config.ConfigTypes;
-import sawfowl.synapse.api.config.LocalisedComment;
+import sawfowl.synapse.api.config.LocalizedComment;
 
 @ConfigSerializable
 public class LocalesSettings {
@@ -12,13 +12,13 @@ public class LocalesSettings {
 	public LocalesSettings(){}
 
 	@Setting("ConfigType")
-	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "ConfigType"})
+	@LocalizedComment(plugin = "synapse", path = {"ConfigComments", "ConfigType"})
 	private ConfigTypes type = ConfigTypes.GEYSER_YAML;
 	@Setting("ForcedUse")
-	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "ForcedUse"})
+	@LocalizedComment(plugin = "synapse", path = {"ConfigComments", "ForcedUse"})
 	private boolean forcedUse = false;
 	@Setting("Path")
-	@LocalisedComment(plugin = "synapse", path = {"ConfigComments", "Path"})
+	@LocalizedComment(plugin = "synapse", path = {"ConfigComments", "Path"})
 	private String path = "{PLUGIN_CONFIG_PATH}";
 
 	public ConfigTypes getType() {

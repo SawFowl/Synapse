@@ -12,6 +12,8 @@ import sawfowl.synapse.api.text.Text;
  * Placeholders will not be applied to the entire text.<br>
  * You will need to apply them to a specific text yourself,
  *  but you do not need to repeat each time what should be replaced in the text.
+ *  
+ *  @author SawFowl
  */
 public interface PlaceholderService {
 

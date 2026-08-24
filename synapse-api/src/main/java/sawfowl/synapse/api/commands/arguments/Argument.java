@@ -29,6 +29,16 @@ import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CommandService;
 import sawfowl.synapse.api.utils.TextUtils;
 
+/**
+ * The interface is designed for simplified creation of command arguments.<br>
+ * When using this interface, you won’t need to write identical code multiple times for different commands to process an argument.<br>
+ * Create an argument with the type you need and the corresponding parser;<br>
+ * after that, you can assign this argument to any commands.<br>
+ * Synapse will make a copy of your settings for each of your commands to which you assign the argument.<br>
+ * Creating copies is necessary because each of them is assigned its own command executor.
+ * 
+ * @author SawFowl
+ */
 public interface Argument<T> {
 
 	public static String[] EMPTY_VARIANTS = {};
@@ -142,27 +152,57 @@ public interface Argument<T> {
 
 	boolean isOptional();
 
+	/**
+	 * It will return `null` until the command containing this argument is built.
+	 */
 	@Nullable CommandNode<CommandSource> asCommandNode();
 
 	interface Builder<T> extends AbstractBuilder<Argument<T>> {
 
+		/**
+		 * Assigning an argument name. The name of each command argument must be unique.
+		 */
 		Builder<T> setName(String name);
 
+		/**
+		 * You can set the requirements for the permissibility of the argument input.
+		 */
 		Builder<T> setRequirement(Predicate<CommandSource> requirement);
 
+		/**
+		 * @param parser - See {@link ArgumentParser}
+		 */
 		Builder<T> setArgumentParser(ArgumentParser<CommandSource, T> parser);
 
+		/**
+		 * 
+		 * @param predicate - See {@link ArgumentParser.Predicate}
+		 * @param parser - See {@link ArgumentParser}
+		 * @return
+		 */
 		Builder<T> setArgumentParser(ArgumentParser.Predicate predicate, ArgumentParser<CommandSource, T> parser);
 
 		/**
-		 * default {@link StringArgumentType#word}
+		 * Default {@link StringArgumentType#word}<br>
+		 * Do not try to create your own argument types. This is impossible without modifying the client.
 		 */
 		Builder<T> setType(ArgumentType<?> type);
 
+		/**
+		 * Should the argument be optional?
+		 */
 		Builder<T> setOptional(boolean value);
 
+		/**
+		 * @param allowAny - If it is false, then only input that matches any of the pre‑defined options will be considered valid.
+		 * @param variants - See {@link ArgumentSupplier}
+		 * @return
+		 */
 		Builder<T> setVariants(boolean allowAny, ArgumentSupplier variants);
 
+		/**
+		 * @param supplier - See {@link UsageSupplier}
+		 */
 		Builder<T> setUsage(UsageSupplier supplier);
 
 	}

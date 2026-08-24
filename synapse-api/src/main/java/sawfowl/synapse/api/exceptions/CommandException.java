@@ -17,6 +17,8 @@ import sawfowl.synapse.api.utils.TextUtils;
 /**
  * Thrown when an executed command raises an error or when execution of
  * the command failed.
+ * 
+ * @author Sponge team
  */
 public class CommandException extends CommandSyntaxException implements ComponentMessageThrowable {
 

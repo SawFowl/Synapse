@@ -12,6 +12,13 @@ import sawfowl.synapse.api.economy.Account;
 import sawfowl.synapse.api.economy.Currency;
 import sawfowl.synapse.api.economy.UniqueAccount;
 
+/**
+ * This service does not have a default implementation.<br>
+ * The implementation must be created by another plugin, which will be responsible for synchronizing economic data between servers.<br>
+ * After the implementation is created, the service must be registered.
+ * 
+ * @author SawFowl
+ */
 public interface EconomyService {
 
 	static EconomyService get() {
