@@ -41,12 +41,12 @@ public class IApacheLogger implements Logger {
 
 	@Override
 	public void info(Component component) {
-		info(Colors.convertColors(component));
+		logger.info(Colors.convertColors(component));
 	}
 
 	@Override
 	public void info(Component component, Throwable throwable) {
-		info(Colors.convertColors(component), throwable);
+		logger.info(Colors.convertColors(component), throwable);
 	}
 
 	@Override
@@ -76,12 +76,12 @@ public class IApacheLogger implements Logger {
 
 	@Override
 	public void warn(Component component) {
-		warn(Colors.convertColors(component));
+		logger.warn(Colors.convertColors(component));
 	}
 
 	@Override
 	public void warn(Component component, Throwable throwable) {
-		warn(Colors.convertColors(component), throwable);
+		logger.warn(Colors.convertColors(component), throwable);
 	}
 
 	@Override
@@ -111,12 +111,12 @@ public class IApacheLogger implements Logger {
 
 	@Override
 	public void error(Component component) {
-		error(Colors.convertColors(component));
+		logger.error(Colors.convertColors(component));
 	}
 
 	@Override
 	public void error(Component component, Throwable throwable) {
-		error(Colors.convertColors(component), throwable);
+		logger.error(Colors.convertColors(component), throwable);
 	}
 
 	@Override
@@ -146,12 +146,12 @@ public class IApacheLogger implements Logger {
 
 	@Override
 	public void debug(Component component) {
-		debug(Colors.convertColors(component));
+		logger.debug(Colors.convertColors(component));
 	}
 
 	@Override
 	public void debug(Component component, Throwable throwable) {
-		debug(Colors.convertColors(component), throwable);
+		logger.debug(Colors.convertColors(component), throwable);
 	}
 
 }

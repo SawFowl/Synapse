@@ -11,7 +11,6 @@ import com.velocitypowered.api.proxy.Player;
 
 import net.kyori.adventure.text.Component;
 
-import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.exceptions.CommandException;
@@ -25,7 +24,7 @@ public class Broadcast extends AbstractCommand {
 	}
 
 	private void broadcast(Component message, Map<Locale, Component> localized) {
-		SynapsePlugin.getLogger().info(getCommands(Locale.getDefault()).getBroadcast(message));
+		Synapse.getProxy().getConsoleCommandSource().sendMessage(getCommands(Locale.getDefault()).getBroadcast(message));
 		for(Player player : Synapse.getProxy().getAllPlayers()) {
 			if(localized.containsKey(player.getEffectiveLocale())) {
 				player.sendMessage(localized.get(player.getEffectiveLocale()));

@@ -41,12 +41,12 @@ public class IJavaLogger implements Logger {
 
 	@Override
 	public void info(Component component) {
-		info(Colors.convertColors(component));
+		logger.log(Level.INFO, Colors.convertColors(component));
 	}
 
 	@Override
 	public void info(Component component, Throwable throwable) {
-		info(Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
+		logger.log(Level.INFO, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
 	}
 
 	@Override
@@ -76,12 +76,12 @@ public class IJavaLogger implements Logger {
 
 	@Override
 	public void warn(Component component) {
-		warn(Colors.convertColors(component));
+		logger.log(Level.WARNING, Colors.convertColors(component));
 	}
 
 	@Override
 	public void warn(Component component, Throwable throwable) {
-		warn(Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
+		logger.log(Level.WARNING, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
 	}
 
 	@Override
@@ -111,12 +111,12 @@ public class IJavaLogger implements Logger {
 
 	@Override
 	public void error(Component component) {
-		error(Colors.convertColors(component));
+		logger.log(Level.ERROR, Colors.convertColors(component));
 	}
 
 	@Override
 	public void error(Component component, Throwable throwable) {
-		error(Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
+		logger.log(Level.ERROR, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
 	}
 
 	@Override
@@ -146,12 +146,12 @@ public class IJavaLogger implements Logger {
 
 	@Override
 	public void debug(Component component) {
-		debug(Colors.convertColors(component));
+		logger.log(Level.DEBUG, Colors.convertColors(component));
 	}
 
 	@Override
 	public void debug(Component component, Throwable throwable) {
-		debug(Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
+		logger.log(Level.DEBUG, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
 	}
 
 }
