@@ -16,7 +16,6 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
-
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -27,6 +26,7 @@ import net.kyori.adventure.text.Component;
 import sawfowl.synapse.api.ResourceKey;
 import sawfowl.synapse.api.services.BuilderService;
 import sawfowl.synapse.api.services.CommandService;
+import sawfowl.synapse.api.utils.StringUtils;
 import sawfowl.synapse.api.utils.TextUtils;
 
 /**
@@ -41,9 +41,9 @@ import sawfowl.synapse.api.utils.TextUtils;
  */
 public interface Argument<T> {
 
-	public static String[] EMPTY_VARIANTS = {};
+	static String[] EMPTY_VARIANTS = {};
 
-	public static String[] BOOLEAN_VARIANTS = {"true", "false"};
+	static String[] BOOLEAN_VARIANTS = {"true", "false"};
 
 	static Argument<Player> PLAYER = CommandService.get().getArgument("Player", false);
 
@@ -101,7 +101,7 @@ public interface Argument<T> {
 	static Argument<String> createString(String name, boolean optional, boolean allowAny, String... variants) {
 		return Argument.<String>builder()
 			.setName(name)
-			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(arg.getResult().toString()) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
+			.setArgumentParser(arg -> allowAny || variants == null || variants.length == 0 ? Optional.ofNullable(arg.getResult().toString()) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
 			.setOptional(optional)
 			.setVariants(allowAny, _ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : variants)
 			.build();
@@ -110,7 +110,7 @@ public interface Argument<T> {
 	static Argument<ResourceKey> createResourceKey(String name, boolean optional, boolean allowAny, ResourceKey... variants) {
 		return Argument.<ResourceKey>builder()
 			.setName(name)
-			.setArgumentParser(arg -> variants == null || variants.length == 0 ? Optional.ofNullable(ResourceKey.tryParse(arg.getResult().toString())) : Stream.of(variants).filter(var -> var.equals(arg.getResult())).findFirst())
+			.setArgumentParser(arg -> (allowAny && arg.getResult() instanceof String s && !s.startsWith(":") && !s.endsWith(":") && StringUtils.countMatches(s, ':') == 1) ||  variants == null || variants.length == 0 ? Optional.ofNullable(ResourceKey.tryParse(arg.getResult().toString())) : Stream.of(variants).filter(var -> var.asString().equals(arg.getResult().toString())).findFirst())
 			.setOptional(optional)
 			.setType(StringArgumentType.string())
 			.setVariants(allowAny, _ -> variants == null || variants.length == 0 ? EMPTY_VARIANTS : Stream.of(variants).map(ResourceKey::asQuotedString).toArray(String[]::new))
@@ -148,6 +148,9 @@ public interface Argument<T> {
 
 	String getName();
 
+	/**
+	 * See {@link ArgumentParser}
+	 */
 	<E extends T> Optional<E> parse(CommandContext<CommandSource> context);
 
 	boolean isOptional();

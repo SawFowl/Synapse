@@ -340,12 +340,14 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 				sorted = null;
 				throw new CommandException(usedAliasAndArgs.component);
 			}
-		} else if(!arg.isAllowed(context, context.getArguments().get(arg.getName()).getResult().toString()) && !arg.isOptional()){
+		} else if(!arg.isAllowed(context, context.getArguments().get(arg.getName()).getResult().toString()) && !arg.isOptional() || !arg.getArgumentPredicate().test(this, context)) {
 			usedAliasAndArgs.setFirst(arg.getUsage().get(context.getSource()).append(Component.newline())).append("&4↳<" + arg.getName() + ">↲");
-			if(!sorted.isEmpty()) for(var other : sorted) if(other != arg && sorted.indexOf(other) > sorted.indexOf(arg)) {
-				if(other.isOptional()) {
-					usedAliasAndArgs.append(Component.text(" [" + other.getName() + "]"));
-				} else usedAliasAndArgs.append(Component.text(" <" + other.getName() + ">"));
+			if(!sorted.isEmpty()) for(var other : sorted) {
+				 if(other != arg && sorted.indexOf(other) > sorted.indexOf(arg)) {
+						if(other.isOptional()) {
+							usedAliasAndArgs.append(Component.text(" [" + other.getName() + "]"));
+						} else usedAliasAndArgs.append(Component.text(" <" + other.getName() + ">"));
+					}
 			}
 			sorted.clear();
 			sorted = null;

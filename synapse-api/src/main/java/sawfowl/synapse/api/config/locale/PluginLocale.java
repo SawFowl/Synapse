@@ -46,7 +46,6 @@ public interface PluginLocale extends Config {
 
 	/**
 	 * Getting deserialized text in the constructor for its further modification.<br>
-	 * The operation is possible only after the constructor is registered in the {@link RegisterBuilderEvent} event.
 	 */
 	default Text getText(Object... path) {
 		return Text.of(getComponent(path));
@@ -54,7 +53,6 @@ public interface PluginLocale extends Config {
 
 	/**
 	 * Getting deserialized text in the constructor for its further modification.<br>
-	 * The operation is possible only after the constructor is registered in the {@link RegisterBuilderEvent} event.
 	 */
 	default List<Text> getTexts(Object... path) {
 		return getComponents(path).stream().map(Text::of).toList();

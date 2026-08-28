@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import com.google.gson.JsonObject;

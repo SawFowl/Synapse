@@ -99,7 +99,7 @@ public class ICommandService implements CommandService {
 			"Duration",
 			GenericArgumentBuilder.<Duration>builder()
 				.setName("Duration")
-				.setArgumentParser(arg -> parseDuration(arg.getResult().toString()))
+				.setArgumentParser((_, context) -> context.getArguments().containsKey("Duration") && parseDuration(context.getArguments().get("Duration").getResult().toString()).isPresent(), arg -> parseDuration(arg.getResult().toString()))
 				.build()
 		);
 		defaultArguments.forEach((n, a) -> defaultOptArguments.put(n, cast(a).copy().setOptional()));

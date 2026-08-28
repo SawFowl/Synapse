@@ -11,7 +11,7 @@ import net.kyori.adventure.util.ComponentMessageThrowable;
  * {@link Component} rather than a String. This allows formatted and localized
  * exception messages.
  * 
- * @authors Sponge team
+ * @author Sponge team
  */
 public class ComponentMessageException extends Exception implements ComponentMessageThrowable {
 

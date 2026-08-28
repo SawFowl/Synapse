@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType.StringType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
@@ -139,8 +140,10 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	}
 
 	private boolean testVariant(String[] variants, String input) {
-		if(variants.length == 0 && allowAny) return true;
-		for(String var : variants) if(var.equals(input)) return true;
+		if(allowAny || variants.length == 0) return true;
+		if(type instanceof StringArgumentType st && st.getType() == StringType.QUOTABLE_PHRASE) {
+			for(String var : variants) if(var.equals("\"" + input + "\"")) return true;
+		} else for(String var : variants) if(var.equals(input)) return true;
 		return false;
 	}
 

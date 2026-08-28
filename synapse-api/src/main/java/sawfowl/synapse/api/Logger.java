@@ -1,6 +1,9 @@
 package sawfowl.synapse.api;
 
+import org.slf4j.event.Level;
+
 import net.kyori.adventure.text.Component;
+
 import sawfowl.synapse.api.services.LoggerService;
 import sawfowl.synapse.api.text.Text;
 

@@ -29,7 +29,7 @@ public class TextUtils {
 
 	/**
 	 * Adding the execution of arbitrary code when you click on text.<br>
-	 * It is used {@link SpongeComponents#executeCallback(callback)}
+	 * It is used {@link Callback#of(callback)}
 	 */
 	public static Component createCallBack(Component component, Consumer<CommandSource> callback) {
 		return component.clickEvent(Callback.of(callback));
@@ -122,7 +122,6 @@ public class TextUtils {
 	public static boolean isLegacyDecor(String string) {
 		return string.indexOf('&') != -1 /*&& !string.endsWith("&")*/ && isStyleChar(string.charAt(string.indexOf("&") + 1));
 	}
-
 
 	/**
 	 * Time formatting.
