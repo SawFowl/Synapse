@@ -159,7 +159,7 @@ public interface VirtualConfig {
 	}
 
 	/**
-	 * See {@link ConfigurationNode#find(Class)}
+	 * See {@link ConfigurationNode#get(Class)}
 	 */
 	@Nullable default <T> T getObject(Class<T> clazz, Object... path) {
 		try {

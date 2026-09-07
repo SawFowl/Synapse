@@ -1,10 +1,13 @@
 package sawfowl.synapse.api.config.locale;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+
+import org.spongepowered.configurate.ConfigurationNode;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;

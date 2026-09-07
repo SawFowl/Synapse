@@ -85,7 +85,7 @@ public interface SynapseBrigadierCommand {
 	 * @param <T> - The type of the argument object.
 	 * @param context - The context of the command execution.
 	 * @param key - Identifier of the argument.
-	 * @return {@link Optional}, which, upon successful parsing, will contain an object with the specified type &ltT> . If parsing fails or if no argument has been entered, an empty {@link Optional} will be displayed.
+	 * @return {@link Optional}, which, upon successful parsing, will contain an object with the specified type {@code <T>} . If parsing fails or if no argument has been entered, an empty {@link Optional} will be displayed.
 	 */
 	default <T> Optional<T> getArgument(CommandContext<CommandSource> context, String key) {
 		return getArgumentsCollection().parse(key, context);
