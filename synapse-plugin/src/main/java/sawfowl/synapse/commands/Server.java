@@ -21,10 +21,10 @@ public class Server extends AbstractCommand {
 			.setName("Server")
 			.setArgumentParser(
 				(_, context) -> 
-				context.getArguments().containsKey("Server") && Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(context.getArguments().get("Server").getResult().toString()) && context.getSource().hasPermission(Permissions.getServerArg(s.getServerInfo().getName()))).findFirst().isPresent(),
+				context.getArguments().containsKey("Server") && Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(context.getArguments().get("Server").getResult().toString()) && (context.getSource().hasPermission(Permissions.SERVER_ADMIN) || context.getSource().hasPermission(Permissions.getServerArg(s.getServerInfo().getName())))).findFirst().isPresent(),
 				arg -> Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(arg.getResult().toString())).findFirst()
 			)
-			.setVariants(false, context -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).filter(s -> context.getSource().hasPermission(Permissions.getServerArg(s))).toArray(String[]::new))
+			.setVariants(false, context -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).filter(s -> context.getSource().hasPermission(Permissions.SERVER_ADMIN) || context.getSource().hasPermission(Permissions.getServerArg(s))).toArray(String[]::new))
 			.build(),
 		GenericArgumentBuilder.<Player>builder()
 			.setName("Player")
