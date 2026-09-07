@@ -2,9 +2,10 @@ plugins {
 	id 'java-library'
 	id 'maven-publish'
 	id 'signing'
+	id 'dev.lukebemish.central-portal-publishing' version '0.1.9'
 }
 
-group = 'sawfowl.synapse'
+group = 'io.github.sawfowl'
 version = '1.0.0'
 
 repositories {
@@ -51,13 +52,14 @@ javadoc {
 	}
 }
 
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
-
-			artifactId = project.name
-			groupId = project.group
 
 			pom {
 				name = 'Synapse API'
@@ -75,7 +77,7 @@ publishing {
 					developer {
 						id = 'SawFowl'
 						name = 'SawFowl'
-						email = 'SawFowl@gmail.com'
+						email = 'stalkeriv@yandex.ru'
 					}
 				}
 
@@ -87,23 +89,17 @@ publishing {
 			}
 		}
 	}
+}
 
-	repositories {
-		maven {
-			name = 'GitHubPackages'
-			url = uri("https://maven.pkg.github.com/SawFowl/Synapse")
-			credentials {
-				username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_USERNAME')
-				password = project.findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
-			}
-		}
+signing {
+	useGpgCmd()
+	sign publishing.publications.mavenJava
+}
+
+centralPortalPublishing {
+	bundle('synapse') {
+		username = project.findProperty('mavenCentral.username') ?: System.getenv('MAVEN_CENTRAL_USERNAME')
+		password = project.findProperty('mavenCentral.password') ?: System.getenv('MAVEN_CENTRAL_PASSWORD')
+		publishingType = "AUTOMATIC"
 	}
-}
-
-tasks.withType(JavaCompile) {
-	options.encoding = 'UTF-8'
-}
-
-task publishLocal(type: PublishToMavenLocal) {
-	publication = publishing.publications.mavenJava
 }
