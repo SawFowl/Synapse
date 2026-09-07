@@ -36,3 +36,4 @@ replay_pid*
 /shading-configure/.settings
 /shading-configure/build
 /shading-geyser/build
+local.properties
