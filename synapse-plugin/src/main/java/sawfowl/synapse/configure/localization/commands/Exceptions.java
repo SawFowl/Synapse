@@ -33,6 +33,7 @@ public class Exceptions implements Translation {
 		exceptions.pageNotExist = exceptions.deserialize("&cСтраница недоступна или не верно указан идентификатор. Страницы доступны только в течении 10 минут после создания.");
 		exceptions.targetSelf = exceptions.deserialize("&cВы не можете указывать на себя.");
 		exceptions.messageNotPresent = exceptions.deserialize("&cВы не ввели сообщение.");
+		exceptions.playerNotPresent = exceptions.deserialize("&cВы должны указать игрока.");
 		return exceptions;
 	}
 
@@ -62,6 +63,8 @@ public class Exceptions implements Translation {
 	private Component targetSelf = deserialize("&cYou can't point to yourself.");
 	@Setting("MessageNotPresent")
 	private Component messageNotPresent = deserialize("&cYou didn't enter the message.");
+	@Setting("PlayerNotPresent")
+	private Component playerNotPresent = deserialize("&cYou need to specify the player.");
 
 	public Component getNotPresent(String key) {
 		return argumentNotPresent.containsKey(key) ? argumentNotPresent.get(key) : getDefaultNotPresent();
@@ -97,6 +100,10 @@ public class Exceptions implements Translation {
 
 	public Component getMessageNotPresent() {
 		return messageNotPresent;
+	}
+
+	public Component getPlayerNotPresent() {
+		return playerNotPresent;
 	}
 
 }

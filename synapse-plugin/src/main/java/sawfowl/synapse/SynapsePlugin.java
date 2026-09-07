@@ -36,6 +36,7 @@ import sawfowl.synapse.api.services.EconomyService;
 import sawfowl.synapse.commands.Broadcast;
 import sawfowl.synapse.commands.Callback;
 import sawfowl.synapse.commands.ProxyInfo;
+import sawfowl.synapse.commands.Server;
 import sawfowl.synapse.commands.Sudo;
 import sawfowl.synapse.commands.Tell;
 import sawfowl.synapse.configure.Commands;
@@ -200,6 +201,14 @@ public class SynapsePlugin {
 			.setSettings(getCommands().getBroadcast().getSettings())
 			.setArguments(Argument.createComponent("Message", false))
 			.setExecutor(new Broadcast())
+			.build()
+			.register();
+		if(getCommands().getServer().isEnable()) SynapseBrigadierCommand.builder("server", container)
+			.canUse(source -> source.hasPermission(Permissions.SERVER))
+			.setAliases(getCommands().getServer().getAliases())
+			.setSettings(getCommands().getServer().getSettings())
+			.setArguments(Server.ARGUMENTS)
+			.setExecutor(new Server())
 			.build()
 			.register();
 	}

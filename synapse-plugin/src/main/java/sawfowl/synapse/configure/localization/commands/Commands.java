@@ -21,6 +21,7 @@ public class Commands implements Translation {
 		commands.sudo = Sudo.createRu();
 		commands.proxyInfo = ProxyInfo.createRu();
 		commands.tell = Tell.createRu();
+		commands.server = Server.createRu();
 		commands.waitingForActivation = commands.deserialize("&eАктивация команды '/%command%' через: &6%time%");
 		commands.broadcast = commands.deserialize("&2Объявление&f: %message%");
 		return commands;
@@ -36,6 +37,8 @@ public class Commands implements Translation {
 	private ProxyInfo proxyInfo = new ProxyInfo();
 	@Setting("Tell")
 	private Tell tell = new Tell();
+	@Setting("Server")
+	private Server server = new Server();
 	@Setting("WaitingForActivation")
 	private Component waitingForActivation = deserialize("&eActivating the '/%command%' command via: &6%time%");
 	@Setting("Broadcast")
@@ -55,6 +58,10 @@ public class Commands implements Translation {
 
 	public Tell getTell() {
 		return tell;
+	}
+
+	public Server getServer() {
+		return server;
 	}
 
 	public Component getWaitingForActivation(String command, long time, Time timeConfig) {
