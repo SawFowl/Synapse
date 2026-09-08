@@ -37,3 +37,4 @@ replay_pid*
 /shading-configure/build
 /shading-geyser/build
 local.properties
+synapse-api/maven-build.gradle
