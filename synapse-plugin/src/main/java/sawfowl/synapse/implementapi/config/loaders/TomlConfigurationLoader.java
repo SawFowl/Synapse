@@ -2,15 +2,10 @@ package sawfowl.synapse.implementapi.config.loaders;
 
 import libs.synapse.com.electronwill.nightconfig.core.CommentedConfig;
 import libs.synapse.com.electronwill.nightconfig.core.Config;
-import libs.synapse.com.electronwill.nightconfig.core.io.ParsingMode;
-import libs.synapse.com.electronwill.nightconfig.json.JsonParser;
 import libs.synapse.com.electronwill.nightconfig.toml.TomlFormat;
 import libs.synapse.com.electronwill.nightconfig.toml.TomlWriter;
 import sawfowl.synapse.implementapi.config.loaders.converters.AdventurePrimitiveConverter;
 import sawfowl.synapse.implementapi.config.loaders.converters.CommentProcessor;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
@@ -23,6 +18,7 @@ import org.spongepowered.configurate.loader.ParsingException;
 
 import java.io.*;
 import java.util.*;
+import java.time.temporal.Temporal;
 import java.util.stream.Stream;
 
 public class TomlConfigurationLoader extends AbstractConfigurationLoader<CommentedConfigurationNode> {
@@ -38,35 +34,12 @@ public class TomlConfigurationLoader extends AbstractConfigurationLoader<Comment
 	@Override
 	protected void loadInternal(CommentedConfigurationNode node, BufferedReader reader) throws ParsingException {
 		try {
-			// Read entire TOML file into a string
-			StringBuilder content = new StringBuilder();
-			String line;
-			while((line = reader.readLine()) != null) {
-				content.append(line).append("\n");
-			}
-
-			// Load TOML with comments
-			CommentedConfig tomlConfig = TomlFormat.instance().createConfig();
-			tomlConfig = TomlFormat.instance().createParser().parse(content.toString());
-
-			// Extract comments separately
+			// Straight from TOML to plain maps: the old way went TOML -> JSON text -> config -> maps,
+			// and turned nested arrays into strings on the way.
+			CommentedConfig tomlConfig = TomlFormat.instance().createParser().parse(reader);
 			Map<String, String> comments = extractComments(tomlConfig, "");
-
-			// Convert TOML to JSON string
-			String jsonString = convertTomlToJson(tomlConfig);
-
-			// Parse JSON into Config
-			JsonParser jsonParser = new JsonParser();
-			CommentedConfig nightConfig = TomlFormat.instance().createConfig();
-			jsonParser.parse(jsonString, nightConfig, ParsingMode.REPLACE);
-
-			// Convert to Map and set into node
-			Map<String, Object> dataMap = convertToPlainMap(nightConfig);
-			node.raw(dataMap);
-
-			// Restore comments in the node
+			node.raw(convertToPlainMap(tomlConfig));
 			CommentProcessor.restoreCommentsToNode(node, comments, "");
-			
 		} catch (Exception e) {
 			throw new ParsingException(node, 0, 0, null, "Error parsing TOML", e);
 		}
@@ -130,7 +103,7 @@ public class TomlConfigurationLoader extends AbstractConfigurationLoader<Comment
 		for(Config.Entry entry : config.entrySet()) {
 			String key = entry.getKey();
 			String fullPath = path.isEmpty() ? key : path + "." + key;
-			String comment = config.getComment(key);
+			String comment = config.getComment(Collections.singletonList(key));
 			if(comment != null && !comment.isEmpty()) {
 				result.put(fullPath, comment);
 			}
@@ -159,7 +132,7 @@ public class TomlConfigurationLoader extends AbstractConfigurationLoader<Comment
 				} else if(!comment.startsWith(" ")) {
 					comment = " " + comment;
 				}
-				config.setComment(key, comment);
+				config.setComment(Collections.singletonList(key), comment);
 			}
 			Object value = entry.getValue();
 			if(value instanceof CommentedConfig subConfig) {
@@ -173,104 +146,49 @@ public class TomlConfigurationLoader extends AbstractConfigurationLoader<Comment
 	 */
 	private Map<String, Object> convertToPlainMap(Config config) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		for(Config.Entry entry : config.entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			if(value instanceof Config subConfig) {
-				result.put(key, convertToPlainMap(subConfig));
-			} else if(value instanceof List<?> list) {
-				List<Object> convertedList = new ArrayList<>();
-				for(Object item : list) {
-					if(item instanceof Config itemConfig) {
-						convertedList.add(convertToPlainMap(itemConfig));
-					} else {
-						convertedList.add(item);
-					}
-				}
-				result.put(key, convertedList);
-			} else {
-				result.put(key, value);
-			}
-		}
+		for(Config.Entry entry : config.entrySet()) result.put(entry.getKey(), toPlain(entry.getValue()));
 		return result;
 	}
 
-	/**
-	 * Converts TOML Config to JSON string
-	 */
-	private String convertTomlToJson(CommentedConfig tomlConfig) {
-		JsonObject jsonObject = new JsonObject();
-		copyConfigToJson(tomlConfig, jsonObject);
-		return jsonObject.toString();
-	}
-
-	/**
-	 * Recursively copies data from TOML Config to JsonObject
-	 */
-	private void copyConfigToJson(Config source, JsonObject target) {
-		for(Config.Entry entry : source.entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			if(value instanceof Config subConfig) {
-				JsonObject subJson = new JsonObject();
-				copyConfigToJson(subConfig, subJson);
-				target.add(key, subJson);
-			} else if(value instanceof List<?> list) {
-				com.google.gson.JsonArray jsonArray = new com.google.gson.JsonArray();
-				for(Object item : list) {
-					if(item instanceof Config itemConfig) {
-						JsonObject subJson = new JsonObject();
-						copyConfigToJson(itemConfig, subJson);
-						jsonArray.add(subJson);
-					} else if(item instanceof String) {
-						jsonArray.add(new JsonPrimitive((String) item));
-					} else if(item instanceof Number) {
-						jsonArray.add(new JsonPrimitive((Number) item));
-					} else if(item instanceof Boolean) {
-						jsonArray.add(new JsonPrimitive((Boolean) item));
-					} else if(item != null) {
-						jsonArray.add(new JsonPrimitive(item.toString()));
-					}
-				}
-				target.add(key, jsonArray);
-			} else if(value instanceof String) {
-				target.addProperty(key, (String) value);
-			} else if(value instanceof Number) {
-				target.addProperty(key, (Number) value);
-			} else if(value instanceof Boolean) {
-				target.addProperty(key, (Boolean) value);
-			} else if(value != null) {
-				target.addProperty(key, value.toString());
-			}
+	private Object toPlain(Object value) {
+		if(value instanceof Config subConfig) return convertToPlainMap(subConfig);
+		if(value instanceof List<?> list) {
+			List<Object> result = new ArrayList<>(list.size());
+			for(Object item : list) result.add(toPlain(item));
+			return result;
 		}
+		// TOML dates and times; the JSON round trip used to turn them into strings as well.
+		if(value instanceof Temporal) return value.toString();
+		return value;
 	}
 
 	/**
-	 * Converts Map to TOML Config
+	 * Converts Map to TOML Config.<br>
+	 * Keys are set as one path element: {@code set(String)} splits on dots,
+	 * so a key such as {@code "127.0.0.1"} turned into nested tables.
 	 */
-	@SuppressWarnings("unchecked")
 	private CommentedConfig convertMapToToml(Map<String, Object> map) {
 		CommentedConfig result = TomlFormat.instance().createConfig();
 		for(Map.Entry<String, Object> entry : map.entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			if(value instanceof Map) {
-				result.set(key, convertMapToToml((Map<String, Object>) value));
-			} else if(value instanceof List<?> list) {
-				List<Object> convertedList = new ArrayList<>();
-				for(Object item : list) {
-					if(item instanceof Map) {
-						convertedList.add(convertMapToToml((Map<String, Object>) item));
-					} else {
-						convertedList.add(item);
-					}
-				}
-				result.set(key, convertedList);
-			} else {
-				result.set(key, value);
-			}
+			Object value = toToml(entry.getValue());
+			// TOML has no null.
+			if(value != null) result.set(Collections.singletonList(entry.getKey()), value);
 		}
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Object toToml(Object value) {
+		if(value instanceof Map<?, ?> map) return convertMapToToml((Map<String, Object>) map);
+		if(value instanceof List<?> list) {
+			List<Object> result = new ArrayList<>(list.size());
+			for(Object item : list) {
+				Object converted = toToml(item);
+				if(converted != null) result.add(converted);
+			}
+			return result;
+		}
+		return value;
 	}
 
 	public static final class Builder extends AbstractConfigurationLoader.Builder<Builder, TomlConfigurationLoader> {

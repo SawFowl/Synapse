@@ -56,38 +56,38 @@ public class IPluginLocale extends IConfig implements PluginLocale {
 
 	@Override
 	public String getString(Object... path) {
-		return contains(path) ? getRootNode().node(path).getString() : def ? "" : getDefault().getString(path);
+		return contains(path) ? getRootNode().node(path).getString() : (fallback() == null ? "" : fallback().getString(path));
 	}
 
 	@Override
 	public int getInt(Object... path) {
-		return contains(path) ? getRootNode().node(path).getInt() : def ? 0 : getDefault().getInt(path);
+		return contains(path) ? getRootNode().node(path).getInt() : (fallback() == null ? 0 : fallback().getInt(path));
 	}
 
 	@Override
 	public long getLong(Object... path) {
-		return contains(path) ? getRootNode().node(path).getLong() : def ? 0 : getDefault().getLong(path);
+		return contains(path) ? getRootNode().node(path).getLong() : (fallback() == null ? 0 : fallback().getLong(path));
 	}
 
 	@Override
 	public double getDouble(Object... path) {
-		return contains(path) ? getRootNode().node(path).getDouble() : def ? 0 : getDefault().getDouble(path);
+		return contains(path) ? getRootNode().node(path).getDouble() : (fallback() == null ? 0 : fallback().getDouble(path));
 	}
 
 	@Override
 	public float getFloat(Object... path) {
-		return contains(path) ? getRootNode().node(path).getFloat() : def ? 0 : getDefault().getFloat(path);
+		return contains(path) ? getRootNode().node(path).getFloat() : (fallback() == null ? 0 : fallback().getFloat(path));
 	}
 
 	@Override
 	public boolean getBoolean(Object... path) {
-		return contains(path) ? getRootNode().node(path).getBoolean() : def ? false : getDefault().getBoolean(path);
+		return contains(path) ? getRootNode().node(path).getBoolean() : (fallback() == null ? false : fallback().getBoolean(path));
 	}
 
 	@Override
 	public <T> List<T> getList(Class<T> clazz, Object... path) {
 		try {
-			return contains(path) ? getRootNode().node(path).getList(clazz) : def ? Collections.emptyList() : getDefault().getList(clazz, path);
+			return contains(path) ? getRootNode().node(path).getList(clazz) : (fallback() == null ? Collections.emptyList() : fallback().getList(clazz, path));
 		} catch (SerializationException e) {
 			e.printStackTrace();
 			return Collections.emptyList();
@@ -98,15 +98,21 @@ public class IPluginLocale extends IConfig implements PluginLocale {
 	@Override
 	public <T> T getObject(Class<T> clazz, Object... path) {
 		try {
-			return contains(path) ? getRootNode().node(path).get(clazz) : def ? null : getDefault().getObject(clazz, path);
+			return contains(path) ? getRootNode().node(path).get(clazz) : (fallback() == null ? null : fallback().getObject(clazz, path));
 		} catch (SerializationException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	private PluginLocale getDefault() {
-		return localesList.getDefaultSimpleLocale();
+	/**
+	 * The default locale to take a missing value from, or {@code null} if this is it
+	 * or it is not loaded (the getters used to throw NPE then).
+	 */
+	private PluginLocale fallback() {
+		if(def) return null;
+		PluginLocale fallback = localesList.getDefaultSimpleLocale();
+		return fallback == this ? null : fallback;
 	}
 
 }

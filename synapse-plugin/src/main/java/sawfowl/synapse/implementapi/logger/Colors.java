@@ -1,10 +1,10 @@
 package sawfowl.synapse.implementapi.logger;
 
-import java.math.BigInteger;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -21,7 +21,9 @@ class Colors {
 	public static String convertColors(Object object) {
 		if(object instanceof Component component) return convertColors(component);
 		if(object instanceof String string) return convertColors(string);
-		if(object instanceof Optional optional) return convertColors(optional);
+		if(object == null) return "null";
+		if(object instanceof Text text) return convertColors(text);
+		if(object instanceof Optional<?> optional) return convertColors(optional);
 		if(object instanceof Collection<?> collection) return convertColors(collection);
 		if(object instanceof Map<?, ?> map) return convertColors(map);
 		return convertColors(TextUtils.deserialize(object.toString()));
@@ -35,13 +37,26 @@ class Colors {
 		return convertColors(text.get());
 	}
 
+	/**
+	 * The text of the component and all its children, each part in its color.<br>
+	 * The text of a component that has children used to be dropped, and children lost the color of their parent.
+	 */
 	public static String convertColors(Component message) {
 		if(message == null) return "";
-		if(!message.children().isEmpty()) {
-			String result = "";
-			for(Component component : message.children()) result += convertColors(component);
-			return result + CLEAR;
-		} else return message.color() == null ? TextUtils.clearDecorations(message) : getAnsiColor(message.color()) + TextUtils.clearDecorations(message) + CLEAR;
+		StringBuilder builder = new StringBuilder();
+		append(message, null, builder);
+		return builder.toString();
+	}
+
+	private static void append(Component component, TextColor inherited, StringBuilder builder) {
+		TextColor color = component.color() != null ? component.color() : inherited;
+		String text = component.children().isEmpty() ? TextUtils.clearDecorations(component) : TextUtils.clearDecorations(component.children(List.of()));
+		if(!text.isEmpty()) {
+			if(color == null) {
+				builder.append(text);
+			} else builder.append(getAnsiColor(color)).append(text).append(CLEAR);
+		}
+		for(Component child : component.children()) append(child, color, builder);
 	}
 
 	private static <T, C extends Collection<T>> String convertColors(C list) {
@@ -49,7 +64,11 @@ class Colors {
 	}
 
 	private static <K, V, C extends Map<K, V>> String convertColors(C map) {
-		return map.isEmpty() ? map.toString() : map.entrySet().stream().collect(Collectors.toMap(e -> convertColors(e.getKey()), e -> convertColors(e.getValue()))).toString();
+		if(map.isEmpty()) return map.toString();
+		// toMap() threw on keys that look the same once converted.
+		Map<String, String> converted = new LinkedHashMap<>();
+		map.forEach((key, value) -> converted.put(convertColors(key), convertColors(value)));
+		return converted.toString();
 	}
 
 	private static String convertColors(Optional<?> optional) {
@@ -85,23 +104,9 @@ class Colors {
 	 *         value)
 	 */
 	public static String selectColor(String hexValue) {
-		String rHex = "";
-		String gHex = "";
-		String bHex = "";
-		if (hexValue.length() > 6 || !hexValue.matches("[0-9a-f]{6}$"))
-			return "\u001B[38;2;255;255;255m";
-		else {
-			rHex = hexValue.substring(0, 2).toUpperCase();
-			gHex = hexValue.substring(2, 4).toUpperCase();
-			bHex = hexValue.substring(4, 6).toUpperCase();
-		}
-		// Convert to decimal
-		BigInteger r = new BigInteger(rHex, 16);
-		BigInteger g = new BigInteger(gHex, 16);
-		BigInteger b = new BigInteger(bHex, 16);
-
-		return "\u001B[38;2;" + r + ";" + g + ";" + b + "m";
-
+		if(hexValue == null || !hexValue.matches("[0-9a-fA-F]{6}")) return "\u001B[38;2;255;255;255m";
+		int rgb = Integer.parseInt(hexValue, 16);
+		return selectColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 	}
 
 }

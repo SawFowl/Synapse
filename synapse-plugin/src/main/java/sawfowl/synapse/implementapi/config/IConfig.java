@@ -6,11 +6,9 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
-import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import io.leangen.geantyref.TypeToken;
@@ -68,14 +66,14 @@ public class IConfig implements Config {
 	@Override
 	public <T, O extends ReferencedConfig<T>> O toReference(T config) {
 		Objects.requireNonNull(config);
-		return (O) (referenced == null ? (referenced = IReferencedConfig.create(path, getName(), type, serializers, config)) : referenced);
+		return (O) (referenced == null ? (referenced = IReferencedConfig.create(path.getParent(), getName(), type, serializers, config)) : referenced);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T, O extends ReferencedConfig<T>> O toReference(Class<T> config) {
 		Objects.requireNonNull(config);
-		return (O) (referenced == null ? (referenced = IReferencedConfig.create(path, getName(), type, serializers, config)) : referenced);
+		return (O) (referenced == null ? (referenced = IReferencedConfig.create(path.getParent(), getName(), type, serializers, config)) : referenced);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -88,67 +86,27 @@ public class IConfig implements Config {
 	public <T> boolean addIfNotExist(T object, @Nullable String comment, TypeToken<T> token, Object... path) {
 		Objects.requireNonNull(object);
 		Objects.requireNonNull(token);
-		Objects.requireNonNull(path);
-		if(getRootNode().node(path).virtual()) {
-			try {
-				getRootNode().node(path).set(token, object);
-				if(comment != null && getRootNode() instanceof CommentedConfigurationNode commented) commented.node(path).comment(comment);
-				return true;
-			} catch (SerializationException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
+		return NodeDefaults.addIfNotExist(getRootNode(), comment, path, node -> node.set(token, object));
 	}
 
 	@Override
 	public <T> boolean addIfNotExist(T object, @Nullable String comment, Object... path) {
 		Objects.requireNonNull(object);
-		Objects.requireNonNull(path);
-		if(getRootNode().node(path).virtual()) {
-			try {
-				getRootNode().node(path).set(object.getClass(), object);
-				if(comment != null && getRootNode() instanceof CommentedConfigurationNode commented) commented.node(path).comment(comment);
-				return true;
-			} catch (SerializationException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
+		return NodeDefaults.addIfNotExist(getRootNode(), comment, path, node -> node.set(object.getClass(), object));
 	}
 
 	@Override
 	public <T> boolean addIfNotExist(List<T> object, @Nullable String comment, TypeToken<T> token, Object... path) {
 		Objects.requireNonNull(object);
 		Objects.requireNonNull(token);
-		Objects.requireNonNull(path);
-		if(getRootNode().node(path).virtual()) {
-			try {
-				getRootNode().node(path).setList(token, object);
-				if(comment != null && getRootNode() instanceof CommentedConfigurationNode commented) commented.node(path).comment(comment);
-				return true;
-			} catch (SerializationException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
+		return NodeDefaults.addIfNotExist(getRootNode(), comment, path, node -> node.setList(token, object));
 	}
 
 	@Override
 	public <T> boolean addIfNotExist(Class<T> clazz, List<T> object, @Nullable String comment, Object... path) {
 		Objects.requireNonNull(object);
 		Objects.requireNonNull(clazz);
-		Objects.requireNonNull(path);
-		if(getRootNode().node(path).virtual()) {
-			try {
-				getRootNode().node(path).setList(clazz, object);
-				if(comment != null && getRootNode() instanceof CommentedConfigurationNode commented) commented.node(path).comment(comment);
-				return true;
-			} catch (SerializationException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
+		return NodeDefaults.addIfNotExist(getRootNode(), comment, path, node -> node.setList(clazz, object));
 	}
 
 	@Override

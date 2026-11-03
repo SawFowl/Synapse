@@ -45,7 +45,8 @@ public class IPagination implements Pagination {
 
 		@Override
 		public Builder setLinesPerPage(int lines) {
-			size = lines;
+			// 0 used to end in a division by zero in build().
+			size = Math.max(1, lines);
 			return this;
 		}
 
@@ -62,7 +63,7 @@ public class IPagination implements Pagination {
 
 		@Override
 		public Builder padding(char padding, TextColor color) {
-			IPagination.this.padding = Component.text(padding).color(color);
+			IPagination.this.padding = Component.text(padding).color(color == null ? NamedTextColor.WHITE : color);
 			return this;
 		}
 
@@ -126,6 +127,10 @@ public class IPagination implements Pagination {
 
 		@Override
 		public Pagination build() {
+			// Without these the footer and the header threw NullPointerException.
+			if(size < 1) size = 1;
+			if(header == null) header = Component.empty();
+			if(padding == null) padding = Component.text('=').color(NamedTextColor.WHITE);
 			if(padding != null) {
 				int headerLength = length(header) + 2;
 				Component part = padding;

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -21,7 +22,7 @@ import sawfowl.synapse.api.services.ServiceProvider;
 
 public class IServiceProvider implements ServiceProvider {
 
-	private Map<Class<?>, Object> services = new HashMap<>();
+	private final Map<Class<?>, Object> services = new ConcurrentHashMap<>();
 	private List<Class<?>> defaultServices = Arrays.asList(
 		ProxyServer.class,
 		LoggerService.class,
@@ -31,7 +32,7 @@ public class IServiceProvider implements ServiceProvider {
 		ConfigurationService.class,
 		PlaceholderService.class
 	);
-	private Map<Class<?>, List<Consumer<?>>> listeners = new HashMap<>();
+	private final Map<Class<?>, List<Consumer<?>>> listeners = new HashMap<>();
 	public IServiceProvider(ProxyServer server) {
 		register(ProxyServer.class, server);
 		register(LoggerService.class, ILoggerService.getInstance());
@@ -50,15 +51,14 @@ public class IServiceProvider implements ServiceProvider {
 
 	@Override
 	public <S, I extends S> void register(Class<S> serviceClass, I serviceImplement) {
-		if(isExist(serviceClass)) throw new RuntimeException("The '" + serviceClass.getName() + "' service is already registered.");
-		services.put(serviceClass, serviceImplement);
-		if(listeners.containsKey(serviceClass)) {
-			List<Consumer<?>> accepted = new ArrayList<Consumer<?>>();
-			listeners.get(serviceClass).forEach(consumer -> accepted.add(acceptListener(serviceClass, consumer, serviceImplement)));
-			listeners.get(serviceClass).removeAll(accepted);
-			if(listeners.get(serviceClass).isEmpty()) listeners.remove(serviceClass);
-			accepted.clear();
+		List<Consumer<?>> waiting;
+		synchronized(this) {
+			if(isExist(serviceClass)) throw new RuntimeException("The '" + serviceClass.getName() + "' service is already registered.");
+			services.put(serviceClass, serviceImplement);
+			waiting = listeners.remove(serviceClass);
 		}
+		// Listeners run outside the lock, so they may use the provider themselves.
+		if(waiting != null) waiting.forEach(consumer -> acceptListener(serviceClass, consumer, serviceImplement));
 	}
 
 	@Override
@@ -76,7 +76,17 @@ public class IServiceProvider implements ServiceProvider {
 	@Override
 	public <S> void registerPendingListener(Class<S> serviceClass, Consumer<S> consumer) {
 		if(defaultServices.contains(serviceClass)) return;
-		if(services.containsKey(serviceClass)) acceptListener(serviceClass, (S) services.get(serviceClass), consumer);;
+		S service;
+		synchronized(this) {
+			service = (S) services.get(serviceClass);
+			// The service is not there yet: keep the listener until register() is called for it.
+			// Before, it was dropped here and never called.
+			if(service == null) {
+				listeners.computeIfAbsent(serviceClass, _ -> new ArrayList<>()).add(consumer);
+				return;
+			}
+		}
+		acceptListener(serviceClass, service, consumer);
 	}
 
 	@SuppressWarnings("unchecked")

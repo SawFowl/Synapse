@@ -79,7 +79,7 @@ public class Exceptions implements Translation {
 	}
 
 	public Component getNoMoney(Currency currency, BigDecimal money, String command) {
-		return replace(noMoney, new String[] {CURRENCY, MONEY, COMMAND}, currency.getStyledChar(), Component.text(money.doubleValue()), "/" + command);
+		return replace(noMoney, new String[] {CURRENCY, MONEY, COMMAND}, currency.getStyledChar(), Component.text(money.stripTrailingZeros().toPlainString()), "/" + command);
 	}
 
 	public Component getDelayCancel() {

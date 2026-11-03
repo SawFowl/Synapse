@@ -73,8 +73,8 @@ public class IReferencedConfig<T, N extends ConfigurationNode> extends IConfig i
 	@Override
 	public <C extends Config> C load() {
 		try {
+			// loadToReference() already reads the file; a second load() read and parsed it again.
 			configurationReference = (ConfigurationReference<N>) super.selectLoader().loadToReference();
-			configurationReference.load();
 			valueReference = configurationReference.referenceTo(clazz);
 		} catch (ConfigurateException e) {
 			e.printStackTrace();

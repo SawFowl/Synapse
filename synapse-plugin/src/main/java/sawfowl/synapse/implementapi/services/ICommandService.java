@@ -5,6 +5,7 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
@@ -26,8 +27,8 @@ public class ICommandService implements CommandService {
 		return (ICommandService) CommandService.get();
 	}
 
-	private Map<String, SynapseBrigadierCommand> commands = new HashMap<>();
-	private Map<String, SynapseBrigadierCommand> commandsByAlias = new HashMap<>();
+	private final Map<String, SynapseBrigadierCommand> commands = new ConcurrentHashMap<>();
+	private final Map<String, SynapseBrigadierCommand> commandsByAlias = new ConcurrentHashMap<>();
 	private Map<String, Argument<?>> defaultArguments = new HashMap<>();
 	private Map<String, Argument<?>> defaultOptArguments = new HashMap<>();
 	public ICommandService() {
@@ -45,7 +46,8 @@ public class ICommandService implements CommandService {
 
 	@Override
 	public Optional<SynapseBrigadierCommand> getCommand(String alias) {
-		return commands.containsKey(alias) ? Optional.ofNullable(commands.get(alias)) : commandsByAlias.containsKey(alias) ? Optional.ofNullable(commandsByAlias.get(alias)) : Optional.empty();
+		var command = commands.get(alias);
+		return Optional.ofNullable(command != null ? command : commandsByAlias.get(alias));
 	}
 
 	@Override
@@ -54,9 +56,11 @@ public class ICommandService implements CommandService {
 	}
 
 	public void register(SynapseBrigadierCommand command) {
+		// Check every name before registering anything, so a conflict leaves no half-registered command.
 		if(commands.containsKey(command.getCommand())) throw new RuntimeException("The command '/" + command.getCommand() + "' is already registered!");
+		if(command.getAliases() != null) for(String alias : command.getAliases()) if(commandsByAlias.containsKey(alias)) throw new RuntimeException("The command '/" + alias + "' is already registered!");
 		commands.put(command.getCommand(), command);
-		if(command.getAliases() != null) for(String alias : command.getAliases()) register(alias, command);
+		if(command.getAliases() != null) for(String alias : command.getAliases()) commandsByAlias.put(alias, command);
 	}
 
 	public void unregister(SynapseBrigadierCommand command) {
@@ -68,14 +72,9 @@ public class ICommandService implements CommandService {
 		commands.values().forEach(command -> ((IBrigadierCommand) command).clearLastUsage());
 	}
 
-	private void register(String alias, SynapseBrigadierCommand command) {
-		if(commandsByAlias.containsKey(alias)) throw new RuntimeException("The command '/" + alias + "' is already registered!");
-		commandsByAlias.put(alias, command);
-	}
-
 	private void unregister(String alias) {
-		if(commands.containsKey(alias)) commands.remove(alias);
-		if(commandsByAlias.containsKey(alias)) commandsByAlias.remove(alias);
+		commands.remove(alias);
+		commandsByAlias.remove(alias);
 	}
 
 	private void registerDefaultBuilders() {
@@ -83,7 +82,7 @@ public class ICommandService implements CommandService {
 			"Player",
 			GenericArgumentBuilder.<Player>builder()
 				.setName("Player")
-				.setArgumentParser(arg -> Synapse.getProxy().getAllPlayers().stream().filter(p -> p.getUsername().equals(arg.getResult().toString())).findFirst())
+				.setArgumentParser(arg -> Synapse.getProxy().getPlayer(arg.getResult().toString()))
 				.setVariants(false, _ -> Synapse.getProxy().getAllPlayers().stream().map(Player::getUsername).toArray(String[]::new))
 				.build()
 		);
@@ -91,7 +90,7 @@ public class ICommandService implements CommandService {
 			"Server",
 			GenericArgumentBuilder.<RegisteredServer>builder()
 				.setName("Server")
-				.setArgumentParser(arg -> Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(arg.getResult().toString())).findFirst())
+				.setArgumentParser(arg -> Synapse.getProxy().getServer(arg.getResult().toString()))
 				.setVariants(false, _ -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).toArray(String[]::new))
 				.build()
 		);

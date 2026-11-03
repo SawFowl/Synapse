@@ -2,9 +2,12 @@ package sawfowl.synapse.commands;
 
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import com.mojang.brigadier.context.CommandContext;
 
@@ -33,27 +36,28 @@ public class ProxyInfo extends AbstractCommand {
 	@Override
 	public int execute(SynapseBrigadierCommand command, CommandContext<CommandSource> context) throws CommandException {
 		var locale = context.getSource() instanceof Player player ? player.getEffectiveLocale() : Locale.getDefault();
-		var header = getCommands(locale).getProxyInfo().getTitle();
+		var proxyInfo = getCommands(locale).getProxyInfo();
+		var header = proxyInfo.getTitle();
 		var max = Runtime.getRuntime().maxMemory() / 1024 / 1024;
 		var total = Runtime.getRuntime().totalMemory() / 1024 / 1024;
 		var free = Runtime.getRuntime().freeMemory() / 1024 / 1024;
 		var utilised = total - free;
 		var info = Arrays.asList(
-			getCommands(locale).getProxyInfo().getSystem(this.os),
-			getCommands(locale).getProxyInfo().getJava(java),
-			getCommands(locale).getProxyInfo().getJavaHome(javaHome),
+			proxyInfo.getSystem(this.os),
+			proxyInfo.getJava(java),
+			proxyInfo.getJavaHome(javaHome),
 			getServerTime(locale),
 			getUptime(locale),
 			Component.empty(),
-			getCommands(locale).getProxyInfo().getMax(max),
-			getCommands(locale).getProxyInfo().getAllocated(total),
-			getCommands(locale).getProxyInfo().getUtilised(utilised, (utilised * 100)/total, (utilised * 100)/max),
-			getCommands(locale).getProxyInfo().getFree(Runtime.getRuntime().freeMemory() / 1024 / 1024),
+			proxyInfo.getMax(max),
+			proxyInfo.getAllocated(total),
+			proxyInfo.getUtilised(utilised, (utilised * 100)/total, (utilised * 100)/max),
+			proxyInfo.getFree(free),
 			Component.empty(),
-			getCommands(locale).getProxyInfo().getVelocityVersion(Synapse.getProxy().getVersion().getVersion()),
-			getCommands(locale).getProxyInfo().getPlugins(Synapse.getProxy().getPluginManager().getPlugins().size()),
-			getCommands(locale).getProxyInfo().getServers(Synapse.getProxy().getAllServers().size()),
-			getCommands(locale).getProxyInfo().getPlayers(Synapse.getProxy().getPlayerCount())
+			proxyInfo.getVelocityVersion(Synapse.getProxy().getVersion().getVersion()),
+			proxyInfo.getPlugins(Synapse.getProxy().getPluginManager().getPlugins().size()),
+			proxyInfo.getServers(Synapse.getProxy().getAllServers().size()),
+			proxyInfo.getPlayers(Synapse.getProxy().getPlayerCount())
 		);
 
 		Pagination.builder(15)
@@ -67,10 +71,20 @@ public class ProxyInfo extends AbstractCommand {
 	}
 
 	private Component getServerTime(Locale locale) {
-		var format = new SimpleDateFormat(SynapsePlugin.getLocales().getAsReferenced(locale).getTime().getFormat());
-		var calendar = Calendar.getInstance(locale);
-		calendar.setTimeInMillis(System.currentTimeMillis());
-		return getCommands(locale).getProxyInfo().getServerTime(format.format(calendar.getTime()));
+		var time = SynapsePlugin.getLocales().getAsReferenced(locale).getTime();
+		var format = new SimpleDateFormat(time.getFormat(), locale);
+		// The TimeZone setting existed in the locales but was never applied.
+		format.setTimeZone(timeZone(time.getTimeZone()));
+		return getCommands(locale).getProxyInfo().getServerTime(format.format(new Date()));
+	}
+
+	private static TimeZone timeZone(String id) {
+		if(id == null || id.isBlank()) return TimeZone.getDefault();
+		try {
+			return TimeZone.getTimeZone(ZoneId.of(id.trim()));
+		} catch (DateTimeException e) {
+			return TimeZone.getDefault();
+		}
 	}
 
 	private Component getUptime(Locale locale) {

@@ -1,5 +1,6 @@
 package sawfowl.synapse.implementapi.text;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -12,7 +13,6 @@ import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import sawfowl.synapse.api.text.Text;
-import sawfowl.synapse.api.text.callback.Callback;
 import sawfowl.synapse.api.utils.TextUtils;
 
 public class IText implements Text {
@@ -36,7 +36,8 @@ public class IText implements Text {
 
 	@Override
 	public Text append(Component component) {
-		this.component.append(component);
+		// Component is immutable: the result has to be stored, otherwise append() does nothing.
+		this.component = this.component.append(component);
 		return this;
 	}
 
@@ -47,26 +48,26 @@ public class IText implements Text {
 
 	@Override
 	public Text replace(String key, String value) {
-		component = component.replaceText(TextReplacementConfig.builder().match(key).replacement(value).build());
+		component = component.replaceText(TextReplacementConfig.builder().matchLiteral(key).replacement(value == null ? "" : value).build());
 		return this;
 	}
 
 	@Override
 	public Text replace(String key, Component value) {
-		component = component.replaceText(TextReplacementConfig.builder().match(key).replacement(value).build());
+		component = component.replaceText(TextReplacementConfig.builder().matchLiteral(key).replacement(value).build());
 		return this;
 	}
 
 	@Override
 	public Text replace(String key, Text value) {
-		component = component.replaceText(TextReplacementConfig.builder().match(key).replacement(value.get()).build());
+		component = component.replaceText(TextReplacementConfig.builder().matchLiteral(key).replacement(value.get()).build());
 		return this;
 	}
 
 	@Override
 	public Text replace(String key, Object value) {
-		component = component.replaceText(TextReplacementConfig.builder().match(key).replacement(value.toString()).build());
-		return this;
+		// null (e.g. a client brand that has not arrived yet) becomes empty text instead of an NPE.
+		return replace(key, value == null ? "" : value.toString());
 	}
 
 	@Override
@@ -95,13 +96,13 @@ public class IText implements Text {
 
 	@Override
 	public Text createCallBack(Consumer<CommandSource> callback) {
-		component.clickEvent(Callback.of(callback));
+		component = TextUtils.createCallBack(component, callback);
 		return this;
 	}
 
 	@Override
 	public Text createCallBack(Runnable runnable) {
-		createCallBack(_ -> runnable.run());
+		component = TextUtils.createCallBack(component, runnable);
 		return this;
 	}
 
@@ -120,15 +121,15 @@ public class IText implements Text {
 	}
 
 	private Map<String, String> replaceMap(String[] keys, Object[] values) {
-		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].toString() : ""));
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i && values[i] != null ? values[i].toString() : "", (first, _) -> first, LinkedHashMap::new));
 	}
 
 	private Map<String, Component> replaceMapComponents(String[] keys, Component[] values) {
-		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i] : Component.empty()));
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i && values[i] != null ? values[i] : Component.empty(), (first, _) -> first, LinkedHashMap::new));
 	}
 
 	private Map<String, Component> replaceMapTexts(String[] keys, Text[] values) {
-		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i ? values[i].get() : Component.empty()));
+		return IntStream.range(0, keys.length).boxed().collect(Collectors.toMap(i -> keys[i], i -> values.length > i && values[i] != null ? values[i].get() : Component.empty(), (first, _) -> first, LinkedHashMap::new));
 	}
 
 	private Builder createBuilder() {

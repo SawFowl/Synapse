@@ -1,6 +1,6 @@
 package sawfowl.synapse.implementapi.services;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,8 +21,8 @@ public class ICallbackService implements CallbackSevice {
 		return instance;
 	}
 
-	private Map<String, Executor> executors = new HashMap<String, Executor>();
-	private Map<String, Executor> paginations = new HashMap<String, Executor>();
+	private final Map<String, Executor> executors = new ConcurrentHashMap<>();
+	private final Map<String, Executor> paginations = new ConcurrentHashMap<>();
 	public ICallbackService() {
 		instance = this;
 	}
@@ -57,8 +57,9 @@ public class ICallbackService implements CallbackSevice {
 
 	@Override
 	public Optional<Consumer<CommandSource>> getCallback(String uuid, CommandSource source) {
-		if(!executors.containsKey(uuid)) return Optional.empty();
-		return Optional.ofNullable(checkRemove(uuid, executors.get(uuid), source));
+		Executor executor = executors.get(uuid);
+		if(executor == null) return Optional.empty();
+		return Optional.ofNullable(checkRemove(uuid, executor, source));
 	}
 
 	public void clearOld() {
@@ -67,13 +68,15 @@ public class ICallbackService implements CallbackSevice {
 	}
 
 	private Consumer<CommandSource> checkRemove(String uuid, Executor executor, CommandSource forTest) {
-		if(executor.isSingle()) executors.remove(uuid);
-		return executor.getIgnoreTest() != null && executor.getIgnoreTest().test(forTest) ? null : executor.getConsumer();
+		// Test first: a one-time callback must not be used up by someone it ignores.
+		if(executor.getIgnoreTest() != null && executor.getIgnoreTest().test(forTest)) return null;
+		// remove(key, value) is atomic, so two quick clicks cannot both run a one-time callback.
+		if(executor.isSingle() && !executors.remove(uuid, executor)) return null;
+		return executor.getConsumer();
 	}
 
 	public Optional<Consumer<CommandSource>> getPagination(String uuid, CommandSource source) {
-		if(!paginations.containsKey(uuid)) return Optional.empty();
-		return Optional.ofNullable(paginations.get(uuid).getConsumer());
+		return Optional.ofNullable(paginations.get(uuid)).map(Executor::getConsumer);
 	}
 
 	public ClickEvent<Payload.Text> paginationOf(Consumer<CommandSource> consumer) {

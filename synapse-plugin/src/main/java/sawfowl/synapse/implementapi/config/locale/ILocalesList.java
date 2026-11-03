@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-import org.spongepowered.configurate.ConfigurateException;
 
 import com.velocitypowered.api.plugin.PluginContainer;
 
@@ -27,6 +26,7 @@ import sawfowl.synapse.api.config.locale.ReferencedLocale;
 import sawfowl.synapse.api.config.locale.Translation;
 import sawfowl.synapse.api.services.LocaleService;
 import sawfowl.synapse.configure.Config;
+import sawfowl.synapse.implementapi.config.FormatMigration;
 import sawfowl.synapse.utils.WatchRunner;
 
 public class ILocalesList<T extends Translation> implements LocalesList<T> {
@@ -39,13 +39,16 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 		return SynapsePlugin.getConfig();
 	}
 
-	private Map<Locale, PluginLocale> locales = new HashMap<>();
+	// Read on every localized message and changed by the file watcher thread.
+	private final Map<Locale, PluginLocale> locales = new ConcurrentHashMap<>();
 	private Path path;
 	private PluginContainer container;
 	private Class<T> reference;
 	private static final String DOT = ".";
+	private final LocaleService localeService;
 	private ILocalesList(PluginContainer container, Path configDirectory, LocaleService localeService) {
 		this.container = container;
+		this.localeService = localeService;
 		if(getConfig() != null) {
 			String dir = getConfig().getLocalesSettings(container).getPath()
 					.replace("{SYNAPSE_PATH}", SynapsePlugin.getSynapsePluginConfigDir())
@@ -72,135 +75,92 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 
 	@Override
 	public PluginLocale createSimpleTranslation(ConfigTypes configType, Locale locale) {
+		// pause/resume always in pairs: the early returns used to skip the second call and leave the watcher toggled.
+		WatchRunner.pause();
+		try {
+			return createSimpleTranslationUnpaused(configType, locale);
+		} finally {
+			WatchRunner.resume();
+		}
+	}
+
+	private PluginLocale createSimpleTranslationUnpaused(ConfigTypes configType, Locale locale) {
 		Objects.requireNonNull(locale);
-		WatchRunner.pause();
 		if(configType == null) configType = getConfig() == null ? ConfigTypes.HOCON : getConfig().getLocalesSettings(container).getType();
-		if(getConfig() != null && getConfig().getLocalesSettings(container).isForcedUse() && !configType.comparableType(getConfig().getLocalesSettings(container).getType())) {
-			if(path.resolve(locale.toLanguageTag() + getConfig().getLocalesSettings(container).getType().toString()).toFile().exists()) {
-				locales.put(locale, IPluginLocale.create(path, getConfig().getLocalesSettings(container).getType(), locale, this));
-				return locales.get(locale); 
-			}
-			PluginLocale updated = IPluginLocale.create(path, getConfig().getLocalesSettings(container).getType(), locale, this);
-			PluginLocale old = null;
-			for(File file : path.toFile().listFiles()) {
-				if(!file.getName().contains(locale.toLanguageTag())) continue;
-				ConfigTypes type = ConfigTypes.getTypeByExtension(ConfigTypes.getExtension(file.getName()));
-				if(type  == ConfigTypes.UNKNOWN || type.comparableType(getConfig().getLocalesSettings(container).getType())) continue;
-				if(old == null) {
-					old = IPluginLocale.create(path, configType, locale, this);
-					try {
-						updated.getLoader().save(old.getRootNode());
-						old.getPath().toFile().delete();
-						old = null;
-					} catch (ConfigurateException e) {
-						e.printStackTrace();
-						updated.getPath().toFile().delete();
-					}
-				} else file.delete();
-			}
-			if(locales.containsKey(locale)) locales.remove(locale);
-			updated.load();
-			locales.put(locale, updated);
-		} else locales.put(locale, IPluginLocale.create(path, configType, locale, this));
-		WatchRunner.pause();
-		return locales.get(locale);
+		PluginLocale created = isForced()
+			? FormatMigration.open(path, locale.toLanguageTag(), getConfig().getLocalesSettings(container).getType(), type -> IPluginLocale.create(path, type, locale, this))
+			: IPluginLocale.create(path, configType, locale, this);
+		locales.put(locale, created);
+		return created;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <O extends T> ReferencedLocale<O> createReferencedTranslation(ConfigTypes configType, Locale locale, Class<O> clazz) {
+		WatchRunner.pause();
+		try {
+			return createReferencedTranslationUnpaused(configType, locale, clazz);
+		} finally {
+			WatchRunner.resume();
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private <O extends T> ReferencedLocale<O> createReferencedTranslationUnpaused(ConfigTypes configType, Locale locale, Class<O> clazz) {
 		Objects.requireNonNull(locale);
 		Objects.requireNonNull(clazz);
-		WatchRunner.pause();
 		if(reference == null) reference = (Class<T>) clazz;
 		if(configType == null) configType = getConfig() == null ? ConfigTypes.HOCON : getConfig().getLocalesSettings(container).getType();
-		if(getConfig() != null && getConfig().getLocalesSettings(container).isForcedUse()) {
-			if(path.resolve(locale.toLanguageTag() + getConfig().getLocalesSettings(container).getType().toString()).toFile().exists()) {
-				locales.put(locale, IReferencedLocale.create(path, getConfig().getLocalesSettings(container).getType(), clazz, locale));
-				return (ReferencedLocale<O>) locales.get(locale); 
-			}
-			IReferencedLocale<O> updated = IReferencedLocale.create(path, getConfig().getLocalesSettings(container).getType(), clazz, locale);
-			ReferencedLocale<O> old = null;
-			for(File file : path.toFile().listFiles()) {
-				if(!file.getName().contains(locale.toLanguageTag())) continue;
-				ConfigTypes type = ConfigTypes.getTypeByExtension(ConfigTypes.getExtension(file.getName()));
-				if(type  == ConfigTypes.UNKNOWN || type.comparableType(getConfig().getLocalesSettings(container).getType())) continue;
-				if(old == null) {
-					//old = ConfigImpl.create(path, locale.toLanguageTag(), configType, updated.getSerializers());
-					old = IReferencedLocale.create(path, configType, clazz, locale);
-					old.load();
-					//updated.save(old.get());
-					try {
-						updated.getLoader().save(old.getRootNode());
-						old.getPath().toFile().delete();
-						old = null;
-					} catch (ConfigurateException e) {
-						e.printStackTrace();
-						updated.getPath().toFile().delete();
-					}
-				} else file.delete();
-			}
-			if(locales.containsKey(locale)) locales.remove(locale);
-			updated.load();
-			locales.put(locale, updated);
-		} else locales.put(locale, IReferencedLocale.create(path, configType, clazz, locale));
-		if(reference == null) reference = (Class<T>) clazz;
-		WatchRunner.pause();
-		return (ReferencedLocale<O>) locales.get(locale);
+		ReferencedLocale<O> created = isForced()
+			? FormatMigration.open(path, locale.toLanguageTag(), getConfig().getLocalesSettings(container).getType(), type -> IReferencedLocale.create(path, type, clazz, locale))
+			: IReferencedLocale.create(path, configType, clazz, locale);
+		locales.put(locale, created);
+		return created;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <O extends T> ReferencedLocale<O> createReferencedTranslation(ConfigTypes configType, Locale locale, O object) {
+		WatchRunner.pause();
+		try {
+			return createReferencedTranslationUnpaused(configType, locale, object);
+		} finally {
+			WatchRunner.resume();
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private <O extends T> ReferencedLocale<O> createReferencedTranslationUnpaused(ConfigTypes configType, Locale locale, O object) {
 		Objects.requireNonNull(locale);
 		Objects.requireNonNull(object);
-		WatchRunner.pause();
 		if(reference == null) reference = (Class<T>) object.getClass();
 		if(configType == null) configType = getConfig() == null ? ConfigTypes.HOCON : getConfig().getLocalesSettings(container).getType();
-		if(getConfig() != null && getConfig().getLocalesSettings(container).isForcedUse()) {
-			if(path.resolve(locale.toLanguageTag() + getConfig().getLocalesSettings(container).getType().toString()).toFile().exists()) {
-				locales.put(locale, IReferencedLocale.create(path, getConfig().getLocalesSettings(container).getType(), object, locale));
-				return (ReferencedLocale<O>) locales.get(locale); 
-			}
-			IReferencedLocale<O> updated = IReferencedLocale.create(path, getConfig().getLocalesSettings(container).getType(), object, locale);
-			ReferencedLocale<O> old = null;
-			for(File file : path.toFile().listFiles()) {
-				if(!file.getName().contains(locale.toLanguageTag())) continue;
-				ConfigTypes type = ConfigTypes.getTypeByExtension(ConfigTypes.getExtension(file.getName()));
-				if(type  == ConfigTypes.UNKNOWN || type.comparableType(getConfig().getLocalesSettings(container).getType())) continue;
-				if(old == null) {
-					old = IReferencedLocale.create(path, configType, object, locale);
-					old.load();
-					updated.save(old.get());
-					try {
-						updated.getLoader().save(old.getRootNode());
-						old.getPath().toFile().delete();
-						old = null;
-					} catch (ConfigurateException e) {
-						e.printStackTrace();
-						updated.getPath().toFile().delete();
-					}
-				} else file.delete();
-			}
-			if(locales.containsKey(locale)) locales.remove(locale);
-			updated.load();
-			locales.put(locale, updated);
-		} else locales.put(locale, IReferencedLocale.create(path, configType, object, locale));
-		if(reference == null) reference = (Class<T>) object.getClass();
-		WatchRunner.pause();
-		return (ReferencedLocale<O>) locales.get(locale);
+		ReferencedLocale<O> created = isForced()
+			? FormatMigration.open(path, locale.toLanguageTag(), getConfig().getLocalesSettings(container).getType(), type -> IReferencedLocale.create(path, type, object, locale))
+			: IReferencedLocale.create(path, configType, object, locale);
+		locales.put(locale, created);
+		return created;
+	}
+
+	/**
+	 * Locales are moved to the format from the Synapse config.
+	 */
+	private boolean isForced() {
+		return getConfig() != null && getConfig().getLocalesSettings(container).isForcedUse();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <L extends PluginLocale> L getSimple(Locale locale) throws ClassCastException {
-		return (L) (locales.containsKey(locale) ? locales.get(locale) : locales.get(Locales.DEFAULT));
+		// The locale may be null (a player whose client has not sent its settings yet).
+		PluginLocale found = locale == null ? null : locales.get(locale);
+		return (L) (found != null ? found : locales.get(Locales.DEFAULT));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <L extends PluginLocale> L remove(Locale locale) throws ClassCastException {
-		return (L) locales.remove(locale);
+		return (L) (locale == null ? null : locales.remove(locale));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -216,7 +176,7 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 
 	@Override
 	public boolean contains(Locale locale) {
-		return locales.containsKey(locale);
+		return locale != null && locales.containsKey(locale);
 	}
 
 	@Override
@@ -234,9 +194,8 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 	}
 
 	public void saveAssetLocales() {
-		File localePath = this.path.toFile();
-		if(!localePath.exists()) localePath.mkdir();
-		for(Locale locale : EnumLocales.getLocales()) saveAssets(locale);
+		createFolders(path, path.toFile());
+		container.getDescription().getSource().ifPresent(this::saveAssets);
 		updateWatch();
 	}
 
@@ -244,35 +203,39 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 		return path;
 	}
 
-	private void saveAssets(Locale locale) {
-		for(ConfigTypes configType : ConfigTypes.values()) {
-			var configTypeName = configType.toString();
-			container.getDescription().getSource().ifPresent(pluginFile -> {
-				try(var jarFile = new JarFile(pluginFile.toFile())) {
-					var entries = jarFile.entries();
-					while(entries.hasMoreElements()) {
-						var entry = entries.nextElement();
-						if(!entry.isDirectory() && entry.getName().startsWith("/assets/" + getPluginID() + "/lang/" + locale.toLanguageTag() + configTypeName)) {
-							var inputStream = jarFile.getInputStream(entry);
-							File localeFile = path.resolve(locale.toLanguageTag() + configTypeName).toFile();
-							if(!localeFile.exists() && !contains(locale)) {
-								try {
-									Files.copy(inputStream, localeFile.toPath());
-									//container.logger().info(SynapsePlugin.getLocales().getSystemAsReferenced().getLoggerMessages().getSaveAsset(locale, configType, getPluginID()));
-									if(reference == null) {
-										createSimpleTranslation(configType, locale);
-									} else createReferencedTranslation(configType, locale, reference);
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+	/**
+	 * Copies bundled locales {@code assets/<plugin id>/lang/<tag>.<extension>} out of the plugin jar.<br>
+	 * One pass over the jar. Before, the jar was opened and scanned for every locale and every
+	 * format (75 x 8 = 600 times per plugin), and the entry names were compared with a leading
+	 * "/" that jar entries never have, so nothing was ever extracted.
+	 */
+	private void saveAssets(Path pluginFile) {
+		String prefix = "assets/" + getPluginID() + "/lang/";
+		try(var jarFile = new JarFile(pluginFile.toFile())) {
+			var entries = jarFile.entries();
+			while(entries.hasMoreElements()) {
+				var entry = entries.nextElement();
+				if(entry.isDirectory() || !entry.getName().startsWith(prefix)) continue;
+				String fileName = entry.getName().substring(prefix.length());
+				int dot = fileName.lastIndexOf('.');
+				if(fileName.contains("/") || dot <= 0) continue;
+				String tag = fileName.substring(0, dot);
+				ConfigTypes configType = ConfigTypes.getTypeByExtension(fileName.substring(dot + 1));
+				if(configType == ConfigTypes.UNKNOWN || !EnumLocales.isValisTag(tag)) continue;
+				Locale locale = EnumLocales.find(tag);
+				File localeFile = path.resolve(locale.toLanguageTag() + configType.toString()).toFile();
+				if(localeFile.exists() || contains(locale)) continue;
+				try(var inputStream = jarFile.getInputStream(entry)) {
+					Files.copy(inputStream, localeFile.toPath());
 				}
-			});
+				// Same rule as for the files already in the folder: referenced if the plugin has a reference class.
+				Class<T> referenceClass = reference != null ? reference : localeService.getDefaultReference(container);
+				if(referenceClass == null) {
+					createSimpleTranslation(configType, locale);
+				} else createReferencedTranslation(configType, locale, referenceClass);
+			}
+		} catch (IOException e) {
+			SynapsePlugin.getLogger().error("Could not extract the locales of " + getPluginID(), e);
 		}
 	}
 
@@ -285,9 +248,12 @@ public class ILocalesList<T extends Translation> implements LocalesList<T> {
 	}
 
 	private void createFolders(Path path, File file) {
-		if(!file.exists() && path.getParent() != null) {
-			createFolders(path.getParent(), path.toFile());
-			file.mkdir();
+		// The old recursion created only the last directory, so a locales folder
+		// inside a not yet existing plugin folder was never created.
+		try {
+			Files.createDirectories(path);
+		} catch (IOException e) {
+			SynapsePlugin.getLogger().error("Could not create the locales folder " + path, e);
 		}
 	}
 

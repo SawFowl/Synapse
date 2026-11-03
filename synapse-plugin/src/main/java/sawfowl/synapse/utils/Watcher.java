@@ -2,18 +2,17 @@ package sawfowl.synapse.utils;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.velocitypowered.api.plugin.PluginContainer;
 
@@ -31,14 +30,19 @@ import sawfowl.synapse.configure.localization.LoggerMessages;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 class Watcher {
 
+	/** Time window in which a repeated MODIFY of the same locale counts as a duplicate. */
+	private static final long DUPLICATE_WINDOW_MS = 1000;
 	private WatchService watchService;
-	private boolean freeze = true;
-	private Set<String> registered = new HashSet<>();
-	private Map<Path, PluginContainer> paths = new HashMap<>();
-	private Set<UpdateInfo> updateInfo = new HashSet<>();
+	private volatile boolean enabled = false;
+	private final AtomicInteger paused = new AtomicInteger();
+	private final Set<String> registered = ConcurrentHashMap.newKeySet();
+	private final Map<Path, PluginContainer> paths = new ConcurrentHashMap<>();
+	/** plugin id + locale -> time of the last handled create/reload. */
+	private final Map<String, Long> lastHandled = new ConcurrentHashMap<>();
 	private LocaleService localeService;
 	private Logger logger;
 	Watcher(LocaleService localeService, Logger logger) {
@@ -52,16 +56,20 @@ class Watcher {
 	}
 
 	void pause() {
-		freeze = !freeze;
+		paused.incrementAndGet();
+	}
+
+	void resume() {
+		paused.updateAndGet(value -> Math.max(0, value - 1));
 	}
 
 	void enable() {
-		freeze = false;
+		enabled = true;
 	}
 
 	void register(PluginContainer container, Path localesDir) {
 		if(!registered.contains(container.getDescription().getId())) try {
-			if(!localesDir.toFile().exists()) localesDir.toFile().mkdir();
+			Files.createDirectories(localesDir);
 			localesDir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
 			registered.add(container.getDescription().getId());
 			paths.put(localesDir, container);
@@ -70,34 +78,30 @@ class Watcher {
 		}
 	}
 
-	void startWatch() {
-		
-		if(freeze) {
-			try {
-				watchService.take().reset();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			return;
-		}
-		if(!updateInfo.isEmpty()) updateInfo.removeIf(info -> System.currentTimeMillis() - info.time > 1000);
+	/**
+	 * Waits for one directory's events and handles them.<br>
+	 * The key is always drained and reset: before, a paused watcher either returned without
+	 * reset (that directory never reported anything again) or reset without draining (the key
+	 * came straight back and the thread spun at full CPU).
+	 */
+	void startWatch() throws InterruptedException {
+		WatchKey key = watchService.take();
 		try {
-			while(isResetKey(watchService.take()));
-		} catch (InterruptedException e) {
-			getLogger().error(e.getLocalizedMessage());
-		}
-	}
-
-	private boolean isResetKey(WatchKey key) {
-		if(freeze) return false;
-		for(WatchEvent<?> event : key.pollEvents()) {
-			if(paths.containsKey((Path) key.watchable())) {
-				work(event, paths.get((Path) key.watchable()), (Path) key.watchable(), event.context().toString());
-			} else if(((Path) key.watchable()).getParent() != null) {
-				work(event, (Path) key.watchable(), (((Path) key.watchable()).getParent()).toFile().getName(), event.context().toString());
+			Path dir = (Path) key.watchable();
+			for(WatchEvent<?> event : key.pollEvents()) {
+				// OVERFLOW has no file name; its null context used to kill the watcher thread.
+				if(event.kind() == OVERFLOW || event.context() == null) continue;
+				if(!enabled || paused.get() > 0) continue;
+				PluginContainer container = paths.get(dir);
+				if(container != null) {
+					work(event, container, dir, event.context().toString());
+				} else if(dir.getParent() != null) {
+					work(event, dir, dir.getParent().toFile().getName(), event.context().toString());
+				}
 			}
+		} finally {
+			key.reset();
 		}
-		return key.reset();
 	}
 
 	private void work(WatchEvent<?> event, Path path, String plugin, String file) {
@@ -119,6 +123,10 @@ class Watcher {
 			onModify(container, locale, type);
 		} if(event.kind() == ENTRY_DELETE && locale != Locales.DEFAULT) Synapse.getProxy().getScheduler().buildTask(SynapsePlugin.getInstance(), () -> {
 			if(path.resolve(fileName).toFile().exists()) return;
+			// Only if the locale was loaded from this very file. Converting a locale to another
+			// format deletes the old file, and that used to remove the freshly converted locale.
+			var locales = localeService.getLocales(container);
+			if(locales == null || !locales.contains(locale) || !fileName.equals(locales.getSimple(locale).getPath().getFileName().toString())) return;
 			localeService.getLocales(container).remove(locale);
 			logger.info("[FileWatcher] " + getMessages().getRemove(locale, container));
 			fireEvent(new DeleteEvent(container.getDescription().getId(), locale, fileName));
@@ -131,7 +139,7 @@ class Watcher {
 
 	private void create(PluginContainer container, Locale locale, ConfigTypes type, long time) {
 		logger.info("[FileWatcher] " + getMessages().getAdd(locale, type, container));
-		this.updateInfo.add(new UpdateInfo(time, locale, container));
+		lastHandled.put(key(container, locale), time);
 		PluginLocale pluginLocale = localeService.getDefaultReference(container) == null
 			?
 			localeService.getLocales(container).createSimpleTranslation(type, locale)
@@ -163,32 +171,39 @@ class Watcher {
 	}
 
 	private void onModify(PluginContainer container, Locale locale, ConfigTypes type) {
-		UpdateInfo updateInfo = this.updateInfo.stream().filter(info -> info.locale.equals(locale) && info.container.getDescription().getId().equals(container.getDescription().getId())).findFirst().orElse(null);
-		if(updateInfo == null) {
-			if(!localeService.getLocales(container).contains(locale) || localeService.getLocales(container).getSimple(locale).getType() != type) return;
-			PluginLocale pluginLocale = localeService.getLocales(container).getSimple(locale);
-			pluginLocale.load();
-			this.updateInfo.add(new UpdateInfo(System.currentTimeMillis(), locale, container));
-			logger.info("[FileWatcher] " + getMessages().getReload(locale, type, container));
-			fireEvent(new LocaleEvent.Reload() {
+		// Editors often report one save as several MODIFY events: the ones within a second
+		// of the last handled event are duplicates. This used to be counted by events instead of
+		// time (the clean-up never ran), so a single-event save could make the next save be ignored.
+		long now = System.currentTimeMillis();
+		Long last = lastHandled.get(key(container, locale));
+		if(last != null && now - last < DUPLICATE_WINDOW_MS) return;
+		if(!localeService.getLocales(container).contains(locale) || localeService.getLocales(container).getSimple(locale).getType() != type) return;
+		PluginLocale pluginLocale = localeService.getLocales(container).getSimple(locale);
+		pluginLocale.load();
+		lastHandled.put(key(container, locale), now);
+		logger.info("[FileWatcher] " + getMessages().getReload(locale, type, container));
+		fireEvent(new LocaleEvent.Reload() {
 
-				@Override
-				public String getPluginId() {
-					return container.getDescription().getId();
-				}
+			@Override
+			public String getPluginId() {
+				return container.getDescription().getId();
+			}
 
-				@Override
-				public PluginLocale getLocaleConfig() {
-					return pluginLocale;
-				}
+			@Override
+			public PluginLocale getLocaleConfig() {
+				return pluginLocale;
+			}
 
-				@Override
-				public Locale getLocale() {
-					return locale;
-				}
+			@Override
+			public Locale getLocale() {
+				return locale;
+			}
 
-			});
-		} else this.updateInfo.remove(updateInfo);
+		});
+	}
+
+	private static String key(PluginContainer container, Locale locale) {
+		return container.getDescription().getId() + "/" + locale.toLanguageTag();
 	}
 
 	private boolean isValidFile(String fileName, String extension) {
@@ -196,7 +211,12 @@ class Watcher {
 	}
 
 	void stopWatch() {
-		freeze = true;
+		enabled = false;
+		try {
+			watchService.close();
+		} catch (IOException e) {
+			logger.error(e.getLocalizedMessage());
+		}
 	}
 
 	private Logger getLogger() {
@@ -204,7 +224,7 @@ class Watcher {
 	}
 
 	private boolean existTag(String locale) {
-		return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(locale)).findFirst().isPresent();
+		return EnumLocales.isValisTag(locale);
 	}
 
 	private LoggerMessages getMessages() {
@@ -213,30 +233,6 @@ class Watcher {
 
 	private void fireEvent(LocaleEvent event) {
 		Synapse.getProxy().getEventManager().fireAndForget(event);
-	}
-
-	private class UpdateInfo {
-		final PluginContainer container;
-		final Locale locale;
-		final long time;
-		public UpdateInfo(long time, Locale locale, PluginContainer container) {
-			this.container = container;
-			this.locale = locale;
-			this.time = time;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(container, locale, time);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if(this == obj) return true;
-			if(obj == null || getClass() != obj.getClass()) return false;
-			return Objects.equals(container.getDescription().getId(), ((UpdateInfo) obj).container.getDescription().getId()) && Objects.equals(locale, ((UpdateInfo) obj).locale) && time == ((UpdateInfo) obj).time;
-		}
-
 	}
 
 	private record DeleteEvent(String pluginId, Locale locale, String file) implements LocaleEvent.Delete {

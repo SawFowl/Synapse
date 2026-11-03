@@ -57,7 +57,8 @@ public class IResourceKey implements ResourceKey {
 
 		@Override
 		public ResourceKey build() {
-			return null;
+			// Used to return null.
+			return IResourceKey.this;
 		}
 
 		@Override
@@ -69,29 +70,25 @@ public class IResourceKey implements ResourceKey {
 			return IResourceKey.this;
 		}
 
+		/**
+		 * {@code "namespace:id"}; a string without a namespace is a {@code minecraft} key, as in Adventure and Sponge.<br>
+		 * The text was ignored without ':' (the key stayed {@code unknown:unknown}), and {@code "a:b:c"} lost {@code ":c"}.
+		 */
 		@Override
 		public ResourceKey tryParse(String string) throws RuntimeException {
 			Objects.requireNonNull(string);
 			if(string.contains("\"")) string = string.replace("\"", "");
-			if(!string.contains(":")) return IResourceKey.this;
-			var split = string.split(":");
-			switch (split.length) {
-				case 0: {
-					split = null;
-					return IResourceKey.this;
+			int separator = string.indexOf(':');
+			if(separator < 0) {
+				if(!string.isEmpty()) {
+					namespace = "minecraft";
+					id = string;
 				}
-				case 1: {
-					namespace = split[0];
-					split = null;
-					return IResourceKey.this;
-				}
-				default: {
-					namespace = split[0];
-					id = split[1];
-					split = null;
-					return IResourceKey.this;
-				}
+			} else {
+				if(separator > 0) namespace = string.substring(0, separator);
+				if(separator < string.length() - 1) id = string.substring(separator + 1);
 			}
+			return IResourceKey.this;
 		}
 
 	}

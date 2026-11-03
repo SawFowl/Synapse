@@ -1,157 +1,32 @@
 package sawfowl.synapse.implementapi.logger;
 
-import java.lang.System.Logger.Level;
+public class IJavaLogger extends AbstractLogger {
 
-import net.kyori.adventure.text.Component;
-
-import sawfowl.synapse.api.Logger;
-import sawfowl.synapse.api.text.Text;
-
-public class IJavaLogger implements Logger {
-
-	private java.lang.System.Logger logger;
+	private final System.Logger logger;
 	public IJavaLogger(String name) {
 		logger = System.getLogger(name + Colors.CLEAR);
 	}
 
 	@Override
-	public void info(Object object) {
-		logger.log(Level.INFO, Colors.convertColors(object));
+	protected boolean isEnabled(Level level) {
+		return logger.isLoggable(toJava(level));
 	}
 
 	@Override
-	public void info(Text text) {
-		logger.log(Level.INFO, Colors.convertColors(text));
+	protected void write(Level level, String message, Throwable throwable) {
+		// With the throwable, not its message only: the stack trace used to be lost.
+		if(throwable == null) {
+			logger.log(toJava(level), message);
+		} else logger.log(toJava(level), message, throwable);
 	}
 
-	@Override
-	public void info(Object object, Throwable throwable) {
-		logger.log(Level.INFO, Colors.convertColors(object) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void info(String string) {
-		logger.log(Level.INFO, Colors.convertColors(string));
-	}
-
-	@Override
-	public void info(String string, Throwable throwable) {
-		logger.log(Level.INFO, Colors.convertColors(string) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void info(Component component) {
-		logger.log(Level.INFO, Colors.convertColors(component));
-	}
-
-	@Override
-	public void info(Component component, Throwable throwable) {
-		logger.log(Level.INFO, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void warn(Object object) {
-		logger.log(Level.WARNING, Colors.convertColors(object));
-	}
-
-	@Override
-	public void warn(Text text) {
-		logger.log(Level.WARNING, Colors.convertColors(text));
-	}
-
-	@Override
-	public void warn(Object object, Throwable throwable) {
-		logger.log(Level.WARNING, Colors.convertColors(object) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void warn(String string) {
-		logger.log(Level.WARNING, string);
-	}
-
-	@Override
-	public void warn(String string, Throwable throwable) {
-		logger.log(Level.WARNING, Colors.convertColors(string) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void warn(Component component) {
-		logger.log(Level.WARNING, Colors.convertColors(component));
-	}
-
-	@Override
-	public void warn(Component component, Throwable throwable) {
-		logger.log(Level.WARNING, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void error(Object object) {
-		logger.log(Level.ERROR, Colors.convertColors(object));
-	}
-
-	@Override
-	public void error(Text text) {
-		logger.log(Level.ERROR, Colors.convertColors(text));
-	}
-
-	@Override
-	public void error(Object object, Throwable throwable) {
-		logger.log(Level.ERROR, Colors.convertColors(object) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void error(String string) {
-		logger.log(Level.ERROR, Colors.convertColors(string));
-	}
-
-	@Override
-	public void error(String string, Throwable throwable) {
-		logger.log(Level.ERROR, Colors.convertColors(string) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void error(Component component) {
-		logger.log(Level.ERROR, Colors.convertColors(component));
-	}
-
-	@Override
-	public void error(Component component, Throwable throwable) {
-		logger.log(Level.ERROR, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void debug(Object object) {
-		logger.log(Level.DEBUG, Colors.convertColors(object));
-	}
-
-	@Override
-	public void debug(Text text) {
-		logger.log(Level.DEBUG, Colors.convertColors(text));
-	}
-
-	@Override
-	public void debug(Object object, Throwable throwable) {
-		logger.log(Level.DEBUG, Colors.convertColors(object) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void debug(String string) {
-		logger.log(Level.DEBUG, Colors.convertColors(string));
-	}
-
-	@Override
-	public void debug(String string, Throwable throwable) {
-		logger.log(Level.DEBUG, Colors.convertColors(string) + "\n" + throwable.getLocalizedMessage());
-	}
-
-	@Override
-	public void debug(Component component) {
-		logger.log(Level.DEBUG, Colors.convertColors(component));
-	}
-
-	@Override
-	public void debug(Component component, Throwable throwable) {
-		logger.log(Level.DEBUG, Colors.convertColors(component) + "\n" + throwable.getLocalizedMessage());
+	private static System.Logger.Level toJava(Level level) {
+		return switch (level) {
+			case INFO -> System.Logger.Level.INFO;
+			case WARN -> System.Logger.Level.WARNING;
+			case ERROR -> System.Logger.Level.ERROR;
+			case DEBUG -> System.Logger.Level.DEBUG;
+		};
 	}
 
 }

@@ -2,6 +2,7 @@ package sawfowl.synapse.api;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1853,16 +1854,20 @@ public final class Locales {
 		}
 
 		public static boolean exist(String locale) {
-			return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(locale)).findFirst().isPresent();
+			return locale != null && BY_TAG.containsKey(locale);
 		}
 
 		public static Locale find(String locale) {
-			return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(locale)).findFirst().map(l -> l.get()).orElse(getDefault());
+			EnumLocales value = locale == null ? null : BY_TAG.get(locale);
+			return value != null ? value.get() : getDefault();
 		}
 
 		public static boolean isValisTag(String tag) {
-			return Stream.of(EnumLocales.values()).filter(value -> value.getTag().equals(tag)).findFirst().isPresent();
+			return tag != null && BY_TAG.containsKey(tag);
 		}
+
+		/** Tag -> value, built once instead of scanning all values on every lookup. */
+		private static final Map<String, EnumLocales> BY_TAG = Stream.of(EnumLocales.values()).collect(Collectors.toUnmodifiableMap(EnumLocales::getTag, value -> value, (first, _) -> first));
 
 	}
 

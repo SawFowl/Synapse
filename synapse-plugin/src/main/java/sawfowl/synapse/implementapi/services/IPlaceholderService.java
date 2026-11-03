@@ -1,6 +1,8 @@
 package sawfowl.synapse.implementapi.services;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.ClassUtils;
@@ -16,8 +18,18 @@ import sawfowl.synapse.api.utils.TextUtils;
 
 public class IPlaceholderService implements PlaceholderService {
 
-	private final Map<Class<?>, Map<String, Placeholder<?>>> PLACEHOLDERS = new HashMap<>();
-	private final Map<String, Placeholder<?>> SYSTEM_PLACEHOLDERS = new HashMap<>();
+	/** Superclasses and interfaces of a class, computed once per class instead of on every message. */
+	private static final ClassValue<List<Class<?>>> HIERARCHY = new ClassValue<>() {
+		@Override
+		protected List<Class<?>> computeValue(Class<?> type) {
+			List<Class<?>> hierarchy = new ArrayList<>(ClassUtils.getAllSuperclasses(type));
+			hierarchy.addAll(ClassUtils.getAllInterfaces(type));
+			return List.copyOf(hierarchy);
+		}
+	};
+
+	private final Map<Class<?>, Map<String, Placeholder<?>>> PLACEHOLDERS = new ConcurrentHashMap<>();
+	private final Map<String, Placeholder<?>> SYSTEM_PLACEHOLDERS = new ConcurrentHashMap<>();
 	public IPlaceholderService() {
 		register(
 			Player.class,
@@ -58,8 +70,7 @@ public class IPlaceholderService implements PlaceholderService {
 			SYSTEM_PLACEHOLDERS.put(id, placeholder);
 		} else {
 			if(PLACEHOLDERS.containsKey(clazz) && PLACEHOLDERS.get(clazz).containsKey(id)) return false;
-			if(!PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.put(clazz, new HashMap<>());
-			PLACEHOLDERS.get(clazz).put(id, placeholder);
+			PLACEHOLDERS.computeIfAbsent(clazz, _ -> new ConcurrentHashMap<>()).put(id, placeholder);
 		}
 		return true;
 	}
@@ -73,11 +84,9 @@ public class IPlaceholderService implements PlaceholderService {
 	public <T> Text apply(Text text, T arg, Component def) {
 		Class<?> clazz = arg.getClass();
 		if(PLACEHOLDERS.containsKey(clazz)) PLACEHOLDERS.get(arg.getClass()).values().forEach(placeholder -> ((Placeholder<T>) placeholder).apply(text, arg, def));
-		for(Class<?> clazz2 : clazz.getClasses()) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(arg), placeholder, def));
-		}
-		for(Class<?> clazz2 : ClassUtils.getAllInterfaces(clazz)) {
-			if(clazz != clazz2 && PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(arg), placeholder, def));
+		// Superclasses and interfaces of the argument; getClasses() used to return nested classes instead.
+		for(Class<?> clazz2 : HIERARCHY.get(clazz)) {
+			if(PLACEHOLDERS.containsKey(clazz2)) PLACEHOLDERS.get(clazz2).values().forEach(placeholder -> applyOther(text, cast(arg), placeholder, def));
 		}
 		applySystemPlaceholders(text, def);
 		return text;

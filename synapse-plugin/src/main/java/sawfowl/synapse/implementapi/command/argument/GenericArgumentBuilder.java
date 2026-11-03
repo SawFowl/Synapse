@@ -51,16 +51,23 @@ public class GenericArgumentBuilder<S extends CommandSource, A extends GenericAr
 	private ArgumentParser.Predicate argumentPredicate = ArgumentParser.Predicate.DEFAULT;
 	private boolean allowAny;
 	private CommandNode<S> node;
-	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate) {
+	private GenericArgumentBuilder(String name, ArgumentType<?> type, Predicate<S> requirement, SuggestionProvider<S> suggestionsProvider, ArgumentParser<S, T> parser, boolean optional, ArgumentSupplier variants, UsageSupplier usage, ArgumentParser.Predicate argumentPredicate, boolean allowAny) {
 		this.name = name;
 		this.type = type;
 		this.requirement = requirement;
 		this.suggestionsProvider = suggestionsProvider;
 		this.parser = parser;
+		// These were accepted but never assigned, so every copy silently lost its
+		// variants, usage message, validation predicate and optional flag.
+		this.optional = optional;
+		this.variants = variants;
+		this.usage = usage;
+		this.argumentPredicate = argumentPredicate;
+		this.allowAny = allowAny;
 	}
 
 	public GenericArgumentBuilder<S, A, T> copy() {
-		return new GenericArgumentBuilder<>(name, type, requirement, suggestionsProvider, parser, optional, variants, usage, argumentPredicate);
+		return new GenericArgumentBuilder<>(name, type, requirement, suggestionsProvider, parser, optional, variants, usage, argumentPredicate, allowAny);
 	}
 
 	@Override

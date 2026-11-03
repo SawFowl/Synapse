@@ -1,10 +1,8 @@
 package sawfowl.synapse.implementapi.config.builders;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import com.velocitypowered.api.plugin.PluginContainer;
@@ -13,6 +11,7 @@ import sawfowl.synapse.SynapsePlugin;
 import sawfowl.synapse.api.config.Config;
 import sawfowl.synapse.api.config.ConfigTypes;
 import sawfowl.synapse.api.config.builders.ConfigBuilder;
+import sawfowl.synapse.implementapi.config.FormatMigration;
 import sawfowl.synapse.implementapi.config.IConfig;
 
 public class IConfigBuilder implements ConfigBuilder {
@@ -55,30 +54,8 @@ public class IConfigBuilder implements ConfigBuilder {
 	public Config build() {
 		Objects.requireNonNull(configDir);
 		Objects.requireNonNull(name);
-		if(SynapsePlugin.getConfig() != null) {
-			if(SynapsePlugin.getConfig().getConfigSettings(container).isForcedUse()) {
-				Config updated = IConfig.create(configDir, name, SynapsePlugin.getConfig().getConfigSettings(container).getType(), collection);
-				Config old = null;
-				updated = IConfig.create(configDir, name, SynapsePlugin.getConfig().getConfigSettings(container).getType(), collection);
-				for(File file : configDir.toFile().listFiles()) {
-					if(!file.getName().contains(name)) continue;
-					type = ConfigTypes.getTypeByExtension(ConfigTypes.getExtension(file.getName()));
-					if(type  == ConfigTypes.UNKNOWN || type.comparableType(SynapsePlugin.getConfig().getConfigSettings(container).getType())) continue;
-					if(old == null) {
-						old = IConfig.create(configDir, name, type, collection);;
-					} else file.delete();
-				}
-				if(old != null) {
-					try {
-						updated.getLoader().save(old.getRootNode());
-					} catch (ConfigurateException e) {
-						e.printStackTrace();
-					}
-					old.getPath().toFile().delete();
-				}
-				updated.load();
-				return updated;
-			}
+		if(SynapsePlugin.getConfig() != null && SynapsePlugin.getConfig().getConfigSettings(container).isForcedUse()) {
+			return FormatMigration.open(configDir, name, SynapsePlugin.getConfig().getConfigSettings(container).getType(), type -> IConfig.create(configDir, name, type, collection));
 		}
 		Objects.requireNonNull(type);
 		return IConfig.create(configDir, name, type, collection);

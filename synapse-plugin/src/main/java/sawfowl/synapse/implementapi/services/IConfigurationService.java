@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
 
@@ -172,16 +173,24 @@ public class IConfigurationService implements ConfigurationService {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T, C extends ConfigurationNode> ConfigurationLoader<C> createConfigLoader(BufferedWriter bufferedWriter, BufferedReader bufferedReader, ConfigTypes loaderType, @Nullable TypeSerializerCollection otherSerializers) {
+		return createConfigLoader(() -> bufferedWriter, () -> bufferedReader, loaderType, otherSerializers);
+	}
+
+	/**
+	 * Configurate closes the writer/reader after every save/load,
+	 * so the suppliers must hand out a fresh one on each call.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T, C extends ConfigurationNode> ConfigurationLoader<C> createConfigLoader(Callable<BufferedWriter> sink, Callable<BufferedReader> source, ConfigTypes loaderType, @Nullable TypeSerializerCollection otherSerializers) {
 		switch (loaderType) {
-			case HOCON: return (ConfigurationLoader<C>) createHoconConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case YAML: return (ConfigurationLoader<C>) createYamlConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case GEYSER_YAML: return (ConfigurationLoader<C>) createGeyserYamlConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case JSON: return (ConfigurationLoader<C>) createJsonConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case JACKSON: return (ConfigurationLoader<C>) createJacksonConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case XML: return (ConfigurationLoader<C>) createXmlConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
-			case TOML: return (ConfigurationLoader<C>) createTomlConfigurationLoader(otherSerializers).sink(() -> bufferedWriter).source(() -> bufferedReader).build();
+			case HOCON: return (ConfigurationLoader<C>) createHoconConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case YAML: return (ConfigurationLoader<C>) createYamlConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case GEYSER_YAML: return (ConfigurationLoader<C>) createGeyserYamlConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case JSON: return (ConfigurationLoader<C>) createJsonConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case JACKSON: return (ConfigurationLoader<C>) createJacksonConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case XML: return (ConfigurationLoader<C>) createXmlConfigurationLoader(otherSerializers).sink(sink).source(source).build();
+			case TOML: return (ConfigurationLoader<C>) createTomlConfigurationLoader(otherSerializers).sink(sink).source(source).build();
 			default: throw new IllegalArgumentException("Inappropriate value: " + loaderType);
 		}
 	}

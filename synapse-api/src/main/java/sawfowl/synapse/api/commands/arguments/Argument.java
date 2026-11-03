@@ -142,6 +142,21 @@ public interface Argument<T> {
 			.build();
 	}
 
+	/**
+	 * Like {@link #createComponent(String, boolean)}, but for text typed by players:
+	 * only colors and decorations are kept, so the message cannot carry click or hover actions.<br>
+	 * It is used {@link TextUtils#deserializePlayerInput(String)}<br>
+	 * This argument is added to the command only last!
+	 */
+	static Argument<Component> createPlayerComponent(String name, boolean optional) {
+		return Argument.<Component>builder()
+			.setName(name)
+			.setArgumentParser(arg -> Optional.ofNullable(TextUtils.deserializePlayerInput(arg.getResult().toString())))
+			.setType(StringArgumentType.greedyString())
+			.setOptional(optional)
+			.build();
+	}
+
 	@SuppressWarnings("unchecked")
 	static <E> Builder<E> builder() {
 		return BuilderService.get().get(Builder.class);

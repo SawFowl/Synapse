@@ -25,7 +25,7 @@ public class Time implements Translation {
 	public Time() {}
 
 	@Setting("Milliseconds")
-	private Component milliseconds = deserialize("s");
+	private Component milliseconds = deserialize("ms");
 	@Setting("Second")
 	private Component second = deserialize("s");
 	@Setting("Minute")

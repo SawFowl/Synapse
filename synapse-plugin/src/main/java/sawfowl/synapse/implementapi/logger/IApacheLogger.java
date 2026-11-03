@@ -2,156 +2,30 @@ package sawfowl.synapse.implementapi.logger;
 
 import org.apache.logging.log4j.LogManager;
 
-import net.kyori.adventure.text.Component;
+public class IApacheLogger extends AbstractLogger {
 
-import sawfowl.synapse.api.Logger;
-import sawfowl.synapse.api.text.Text;
-
-public class IApacheLogger implements Logger {
-
-	private org.apache.logging.log4j.Logger logger;
+	private final org.apache.logging.log4j.Logger logger;
 	public IApacheLogger(String name) {
 		logger = LogManager.getLogger(name + Colors.CLEAR);
 	}
 
 	@Override
-	public void info(Object object) {
-		logger.info(Colors.convertColors(object));
+	protected boolean isEnabled(Level level) {
+		return logger.isEnabled(toApache(level));
 	}
 
 	@Override
-	public void info(Text text) {
-		logger.info(Colors.convertColors(text));
+	protected void write(Level level, String message, Throwable throwable) {
+		logger.log(toApache(level), message, throwable);
 	}
 
-	@Override
-	public void info(Object object, Throwable throwable) {
-		logger.info(Colors.convertColors(object), throwable);
-	}
-
-	@Override
-	public void info(String string) {
-		logger.info(Colors.convertColors(string));
-	}
-
-	@Override
-	public void info(String string, Throwable throwable) {
-		logger.info(Colors.convertColors(string), throwable);
-	}
-
-	@Override
-	public void info(Component component) {
-		logger.info(Colors.convertColors(component));
-	}
-
-	@Override
-	public void info(Component component, Throwable throwable) {
-		logger.info(Colors.convertColors(component), throwable);
-	}
-
-	@Override
-	public void warn(Object object) {
-		logger.warn(Colors.convertColors(object));
-	}
-
-	@Override
-	public void warn(Text text) {
-		logger.warn(Colors.convertColors(text));
-	}
-
-	@Override
-	public void warn(Object object, Throwable throwable) {
-		logger.warn(Colors.convertColors(object), throwable);
-	}
-
-	@Override
-	public void warn(String string) {
-		logger.warn(Colors.convertColors(string));
-	}
-
-	@Override
-	public void warn(String string, Throwable throwable) {
-		logger.warn(Colors.convertColors(string), throwable);
-	}
-
-	@Override
-	public void warn(Component component) {
-		logger.warn(Colors.convertColors(component));
-	}
-
-	@Override
-	public void warn(Component component, Throwable throwable) {
-		logger.warn(Colors.convertColors(component), throwable);
-	}
-
-	@Override
-	public void error(Object object) {
-		logger.error(Colors.convertColors(object));
-	}
-
-	@Override
-	public void error(Text text) {
-		logger.error(Colors.convertColors(text));
-	}
-
-	@Override
-	public void error(Object object, Throwable throwable) {
-		logger.error(Colors.convertColors(object), throwable);
-	}
-
-	@Override
-	public void error(String string) {
-		logger.error(Colors.convertColors(string));
-	}
-
-	@Override
-	public void error(String string, Throwable throwable) {
-		logger.error(Colors.convertColors(string), throwable);
-	}
-
-	@Override
-	public void error(Component component) {
-		logger.error(Colors.convertColors(component));
-	}
-
-	@Override
-	public void error(Component component, Throwable throwable) {
-		logger.error(Colors.convertColors(component), throwable);
-	}
-
-	@Override
-	public void debug(Object object) {
-		logger.debug(Colors.convertColors(object));
-	}
-
-	@Override
-	public void debug(Text text) {
-		logger.debug(Colors.convertColors(text));
-	}
-
-	@Override
-	public void debug(Object object, Throwable throwable) {
-		logger.debug(Colors.convertColors(object), throwable);
-	}
-
-	@Override
-	public void debug(String string) {
-		logger.debug(Colors.convertColors(string));
-	}
-
-	@Override
-	public void debug(String string, Throwable throwable) {
-		logger.debug(Colors.convertColors(string), throwable);
-	}
-
-	@Override
-	public void debug(Component component) {
-		logger.debug(Colors.convertColors(component));
-	}
-
-	@Override
-	public void debug(Component component, Throwable throwable) {
-		logger.debug(Colors.convertColors(component), throwable);
+	private static org.apache.logging.log4j.Level toApache(Level level) {
+		return switch (level) {
+			case INFO -> org.apache.logging.log4j.Level.INFO;
+			case WARN -> org.apache.logging.log4j.Level.WARN;
+			case ERROR -> org.apache.logging.log4j.Level.ERROR;
+			case DEBUG -> org.apache.logging.log4j.Level.DEBUG;
+		};
 	}
 
 }

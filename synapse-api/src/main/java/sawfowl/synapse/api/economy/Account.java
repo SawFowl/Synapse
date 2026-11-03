@@ -23,8 +23,12 @@ public interface Account {
 	}
 
 	default <A extends Account> boolean transferTo(A account, Currency currency, BigDecimal money) {
-		if(!hasBalance(currency) || getBalance(currency).doubleValue() - money.doubleValue() < 0) return false;
-		return withdraw(currency, money) && account.add(currency, money);
+		if(!hasBalance(currency) || getBalance(currency).compareTo(money) < 0) return false;
+		if(!withdraw(currency, money)) return false;
+		if(account.add(currency, money)) return true;
+		// The receiver did not take the money: give it back instead of losing it.
+		add(currency, money);
+		return false;
 	}
 
 	default void setDefaultBalances() {

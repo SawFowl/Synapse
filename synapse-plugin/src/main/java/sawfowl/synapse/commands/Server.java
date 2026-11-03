@@ -21,8 +21,8 @@ public class Server extends AbstractCommand {
 			.setName("Server")
 			.setArgumentParser(
 				(_, context) -> 
-				context.getArguments().containsKey("Server") && Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(context.getArguments().get("Server").getResult().toString()) && (context.getSource().hasPermission(Permissions.SERVER_ADMIN) || context.getSource().hasPermission(Permissions.getServerArg(s.getServerInfo().getName())))).findFirst().isPresent(),
-				arg -> Synapse.getProxy().getAllServers().stream().filter(s -> s.getServerInfo().getName().equals(arg.getResult().toString())).findFirst()
+				context.getArguments().containsKey("Server") && Synapse.getProxy().getServer(context.getArguments().get("Server").getResult().toString()).filter(s -> context.getSource().hasPermission(Permissions.SERVER_ADMIN) || context.getSource().hasPermission(Permissions.getServerArg(s.getServerInfo().getName()))).isPresent(),
+				arg -> Synapse.getProxy().getServer(arg.getResult().toString())
 			)
 			.setVariants(false, context -> Synapse.getProxy().getAllServers().stream().map(s -> s.getServerInfo().getName()).filter(s -> context.getSource().hasPermission(Permissions.SERVER_ADMIN) || context.getSource().hasPermission(Permissions.getServerArg(s))).toArray(String[]::new))
 			.build(),
@@ -30,7 +30,7 @@ public class Server extends AbstractCommand {
 			.setName("Player")
 			.setOptional(true)
 			.setRequirement(source -> source.hasPermission(Permissions.SERVER_ADMIN))
-			.setArgumentParser(arg -> Synapse.getProxy().getAllPlayers().stream().filter(p -> p.getUsername().equals(arg.getResult().toString())).findFirst())
+			.setArgumentParser(arg -> Synapse.getProxy().getPlayer(arg.getResult().toString()))
 			.setVariants(false, _ -> Synapse.getProxy().getAllPlayers().stream().map(Player::getUsername).toArray(String[]::new))
 			.build()
 	};
@@ -43,11 +43,11 @@ public class Server extends AbstractCommand {
 
 	private void run(CommandContext<CommandSource> context, RegisteredServer server, Optional<Player> player) throws CommandException {
 		if(player.isPresent()) {
-			player.get().createConnectionRequest(server);
+			player.get().createConnectionRequest(server).fireAndForget();
 			player.get().sendMessage(getCommands(player.get()).getServer().getSuccess(server.getServerInfo().getName()));
 			context.getSource().sendMessage(getCommands(context.getSource()).getServer().getSuccessTarget(server.getServerInfo().getName(), player.get().getUsername()));
 		} else if(context.getSource() instanceof Player source) {
-			source.createConnectionRequest(server);
+			source.createConnectionRequest(server).fireAndForget();
 			source.sendMessage(getCommands(source).getServer().getSuccess(server.getServerInfo().getName()));
 		} else exception(getCommands(context.getSource()).getExceptions().getPlayerNotPresent());
 	}

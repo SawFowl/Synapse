@@ -29,7 +29,14 @@ public class IReferencedVirtualConfig<T, N extends ConfigurationNode> extends IV
 	}
 
 	public static final <T> IReferencedVirtualConfig<T, ConfigurationNode> create(ConfigTypes configType, TypeSerializerCollection serializers, T object) {
-		return new IReferencedVirtualConfig<T, ConfigurationNode>(configType, serializers, object);
+		return new IReferencedVirtualConfig<T, ConfigurationNode>(configType, serializers, object, "");
+	}
+
+	/**
+	 * Loads the raw data; the object is used only if the raw data is empty.
+	 */
+	public static final <T> IReferencedVirtualConfig<T, ConfigurationNode> createWithDefault(ConfigTypes configType, TypeSerializerCollection serializers, T object, String rawData) {
+		return new IReferencedVirtualConfig<T, ConfigurationNode>(configType, serializers, object, rawData);
 	}
 
 	private ConfigurationReference<N> configurationReference;
@@ -48,24 +55,27 @@ public class IReferencedVirtualConfig<T, N extends ConfigurationNode> extends IV
 		super("", configType, serializers);
 		Objects.requireNonNull(clazz);
 		this.clazz = clazz;
+		// The field was never assigned, so the JSON data was ignored and the defaults were saved.
+		this.rawJsonData = rawJsonData;
 		loadFromJson();
 		save();
 	}
 
 	@SuppressWarnings("unchecked")
-	protected IReferencedVirtualConfig(ConfigTypes configType, TypeSerializerCollection serializers, T object) {
-		super("", configType, serializers);
+	protected IReferencedVirtualConfig(ConfigTypes configType, TypeSerializerCollection serializers, T object, String rawData) {
+		super(rawData == null ? "" : rawData, configType, serializers);
 		Objects.requireNonNull(object);
 		this.clazz = (Class<T>) object.getClass();
 		load();
-		save(object);
+		if(getRawData().isBlank()) {
+			save(object);
+		} else save();
 	}
 
 	@Override
 	public ReferencedVirtualConfig<T> loadFromRaw(String rawData) {
 		Objects.requireNonNull(rawData);
 		super.rawData = rawData;
-		updateBuffers();
 		load();
 		return this;
 	}
@@ -73,11 +83,11 @@ public class IReferencedVirtualConfig<T, N extends ConfigurationNode> extends IV
 	@Override
 	public T convertFromJson(JsonElement element) {
 		try {
-			updateBuffers();
 			valueReference.node().set(element);
 			configurationReference.save(valueReference.node());
-			load();
+			// The raw data first: load() reads it, and it used to read the old data.
 			updateRawData();
+			load();
 			return valueReference.get();
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
@@ -122,7 +132,6 @@ public class IReferencedVirtualConfig<T, N extends ConfigurationNode> extends IV
 	@SuppressWarnings({ "unchecked" })
 	@Override
 	public <C extends VirtualConfig> C load() {
-		updateBuffers();
 		try {
 			configurationReference = (ConfigurationReference<N>) super.selectLoader().loadToReference();
 			// configurationReference.load();
@@ -182,12 +191,10 @@ public class IReferencedVirtualConfig<T, N extends ConfigurationNode> extends IV
 
 	@SuppressWarnings("unchecked")
 	private void loadFromJson() {
-		updateBuffers();
 		try {
 			configurationReference = (ConfigurationReference<N>) super.selectLoader().loadToReference();
 			configurationReference.set(NodePath.path(), rawJsonData);
 			valueReference = configurationReference.referenceTo(clazz);
-			updateBuffers();
 		} catch (ConfigurateException e) {
 			e.printStackTrace();
 		}

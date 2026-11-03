@@ -2,12 +2,12 @@ package sawfowl.synapse.implementapi.command;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -24,6 +24,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import com.velocitypowered.api.command.BrigadierCommand;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
@@ -35,6 +36,7 @@ import sawfowl.synapse.api.Synapse;
 import sawfowl.synapse.api.commands.SynapseBrigadierCommand;
 import sawfowl.synapse.api.commands.arguments.Argument;
 import sawfowl.synapse.api.commands.arguments.BrigadierArgumentsCollection;
+import sawfowl.synapse.api.commands.settings.CommandPrice;
 import sawfowl.synapse.api.commands.settings.CommandSettings;
 import sawfowl.synapse.api.economy.Currency;
 import sawfowl.synapse.api.exceptions.CommandException;
@@ -65,8 +67,9 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	private IBrigadierCommand[] childs;
 	private IBrigadierCommand parrent;
 	private CommandSettings settings = ICommandSettings.DEFAULT;
-	private Map<UUID, UsedResult> lastUsed = new HashMap<>();
+	private final Map<UUID, UsedResult> lastUsed = new ConcurrentHashMap<>();
 	private BrigadierCommand brigadierCommand;
+	private CommandMeta commandMeta;
 
 	private IBrigadierCommand() {}
 
@@ -97,17 +100,20 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 
 	@Override
 	public SynapseBrigadierCommand register() {
-		Synapse.getProxy().getCommandManager().register(
-			Synapse.getProxy().getCommandManager().metaBuilder(command).plugin(container).aliases(aliases).build(),
-			brigadierCommand
-		);
+		// Synapse's own registry first: it throws on a duplicate name before anything reaches Velocity.
 		((ICommandService) CommandService.get()).register(this);
+		commandMeta = Synapse.getProxy().getCommandManager().metaBuilder(command).plugin(container).aliases(aliases).build();
+		Synapse.getProxy().getCommandManager().register(commandMeta, brigadierCommand);
 		return this;
 	}
 
 	@Override
 	public SynapseBrigadierCommand unregister() {
-		Synapse.getProxy().getCommandManager().unregister(command);
+		// unregister(String) removes only that alias; the meta removes the command with all its aliases.
+		if(commandMeta != null) {
+			Synapse.getProxy().getCommandManager().unregister(commandMeta);
+			commandMeta = null;
+		} else Synapse.getProxy().getCommandManager().unregister(command);
 		((ICommandService) CommandService.get()).unregister(this);
 		return this;
 	}
@@ -130,22 +136,15 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	}
 
 	public void economyTest(Player player) throws CommandException {
-		var price = settings.getPrice().orElse(null);
-		if(price == null || price.getPrice().doubleValue() <= 0 || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return;
-		var currency = price.getCurrency();
+		var price = activePrice(player);
+		if(price == null) return;
 		var account = Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player);
-		if(!account.hasBalance(currency) || account.getBalance(currency).doubleValue() < price.getPrice().doubleValue()) exceptionMoney(player.getEffectiveLocale(), currency, price.getPrice());
-	}
-
-	public void economyUse(Player player) throws CommandException {
-		var price = settings.getPrice().orElse(null);
-		if(price == null || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return;
-		if(price.getPrice().doubleValue() <= 0) return;
-		Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player).withdraw(price.getCurrency(), price.getPrice());
+		if(!account.hasBalance(price.getCurrency()) || account.getBalance(price.getCurrency()).compareTo(price.getPrice()) < 0) exceptionMoney(player.getEffectiveLocale(), price.getCurrency(), price.getPrice());
 	}
 
 	public void clearLastUsage() {
 		lastUsed.entrySet().removeIf(entry -> (System.currentTimeMillis() / 1000) - settings.getCooldown() >= entry.getValue().time);
+		if(childs != null) for(var child : childs) child.clearLastUsage();
 	}
 
 	private CommandException exceptionMoney(Locale locale, Currency currency, BigDecimal money) throws CommandException {
@@ -230,30 +229,11 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 
 	private CommandNode<CommandSource> createAliasNode(String alias, CommandNode<CommandSource> originalNode) {
 		var aliasBuilder = LiteralArgumentBuilder.<CommandSource>literal(alias);
+		// Without this "/command <alias>" with no arguments was an incomplete command, unlike "/command <child>".
+		if(originalNode.getCommand() != null) aliasBuilder.executes(originalNode.getCommand());
 		copyChildren(aliasBuilder, originalNode);
 		if(originalNode.getRequirement() != null) aliasBuilder.requires(originalNode.getRequirement());
 		return aliasBuilder.build();
-	}
-
-	private void copyChildren(LiteralArgumentBuilder<CommandSource> targetBuilder, CommandNode<CommandSource> sourceNode) {
-		for(var child : sourceNode.getChildren()) {
-			if(child instanceof LiteralCommandNode<CommandSource> literalChild) {
-				var childBuilder = LiteralArgumentBuilder.<CommandSource>literal(literalChild.getName());
-				if(literalChild.getCommand() != null) childBuilder.executes(literalChild.getCommand());
-				if(literalChild.getRequirement() != null) childBuilder.requires(literalChild.getRequirement());
-				copyChildren(childBuilder, literalChild);
-				targetBuilder.then(childBuilder.build());
-			} else if(child instanceof ArgumentCommandNode<CommandSource, ?> argChild) {
-				@SuppressWarnings("unchecked")
-				var type = (ArgumentType<Object>) argChild.getType();
-				var argBuilder = RequiredArgumentBuilder.<CommandSource, Object>argument(argChild.getName(), type);
-				if(argChild.getCommand() != null) argBuilder.executes(argChild.getCommand());
-				if(argChild.getRequirement() != null) argBuilder.requires(argChild.getRequirement());
-				if(argChild.getCustomSuggestions() != null) argBuilder.suggests(argChild.getCustomSuggestions());
-				copyChildren(argBuilder, argChild);
-				targetBuilder.then(argBuilder.build());
-			}
-		}
 	}
 
 	private void copyChildren(ArgumentBuilder<CommandSource, ?> targetBuilder, CommandNode<CommandSource> sourceNode) {
@@ -371,72 +351,80 @@ public class IBrigadierCommand implements SynapseBrigadierCommand {
 	private int runCommand(CommandContext<CommandSource> context) {
 		try {
 			if(argumentsCollection != null) testArgsOnExecute(context, context.getInput());
-			if(context.getSource() instanceof Player player) {
-				economyTest(player);
-				if(settings.getCooldown() > 0 && (settings.getIgnoreCooldown() == null || !player.hasPermission(settings.getIgnoreCooldown()))) {
-					if(lastUsed.containsKey(player.getUniqueId())) {
-						if((System.currentTimeMillis() / 1000) - settings.getCooldown() < lastUsed.get(player.getUniqueId()).time) {
-							player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - ((System.currentTimeMillis() / 1000) - lastUsed.get(player.getUniqueId()).time), SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
-							return fail();
-						} else {
-							lastUsed.remove(player.getUniqueId());
-							if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
-								delay(player, context.getInput(), _ -> {
-									economyTest(player);
-									int result = executor.execute(this, context);
-									if(result != 0) {
-										economyUse(player);
-										lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-									}
-									return result;
-								});
-								return success();
-							}
-						}
-					} else {
-						if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
-							delay(player, context.getInput(), _ -> {
-								economyTest(player);
-								int result = executor.execute(this, context);
-								if(result != 0) {
-									economyUse(player);
-									lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-								}
-								return result;
-							});
-							return success();
-						}
-						int result = executor.execute(this, context);
-						if(result != 0) {
-							economyUse(player);
-							lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-						}
-						return result;
-					}
-				} else if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
-					delay(player, context.getInput(), _ -> {
-						economyTest(player);
-						int result = executor.execute(this, context);
-						if(result != 0) {
-							economyUse(player);
-							lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-						}
-						return result;
-					});
-					return success();
-				}
-				int result = executor.execute(this, context);
-				if(result != 0) {
-					economyUse(player);
-					lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
-				}
-				return result;
+			if(!(context.getSource() instanceof Player player)) return executor.execute(this, context);
+			economyTest(player);
+			if(isOnCooldown(player)) return fail();
+			if(settings.getDelay() > 0 && (settings.getIgnoreDelay() == null || !player.hasPermission(settings.getIgnoreDelay()))) {
+				delay(player, context.getInput(), _ -> isOnCooldown(player) ? fail() : runCharged(player, context));
+				return success();
 			}
-			return executor.execute(this, context);
+			return runCharged(player, context);
 		} catch (CommandException e) {
 			context.getSource().sendMessage(e.componentMessage());
 			return fail();
 		}
+	}
+
+	/**
+	 * Checks the cooldown and, if it is still running, tells the player how long is left.<br>
+	 * Also called right before a delayed execution, so that several delayed copies
+	 * of the same command cannot bypass the cooldown.
+	 */
+	private boolean isOnCooldown(Player player) {
+		if(settings.getCooldown() <= 0 || (settings.getIgnoreCooldown() != null && player.hasPermission(settings.getIgnoreCooldown()))) return false;
+		UsedResult used = lastUsed.get(player.getUniqueId());
+		if(used == null) return false;
+		long passed = (System.currentTimeMillis() / 1000) - used.time;
+		if(passed < settings.getCooldown()) {
+			player.sendMessage(SynapsePlugin.getLocales().getAsReferenced(player).getCommands().getExceptions().getCooldown(settings.getCooldown() - passed, SynapsePlugin.getLocales().getAsReferenced(player).getTime()));
+			return true;
+		}
+		lastUsed.remove(player.getUniqueId(), used);
+		return false;
+	}
+
+	/**
+	 * Executes the command and charges for it only if it was actually executed.<br>
+	 * The money is withdrawn before the execution and returned if the command fails.
+	 * This way the balance cannot be moved away between the check and the payment,
+	 * and the player still never pays for a command that did not run.
+	 */
+	private int runCharged(Player player, CommandContext<CommandSource> context) throws CommandException {
+		var price = activePrice(player);
+		// The balance check stays (an economy may let withdraw() go below zero); withdraw() is then checked too.
+		if(price != null) economyTest(player);
+		if(price != null && !Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player).withdraw(price.getCurrency(), price.getPrice())) {
+			exceptionMoney(player.getEffectiveLocale(), price.getCurrency(), price.getPrice());
+		}
+		int result;
+		try {
+			result = executor.execute(this, context);
+		} catch (CommandException | RuntimeException e) {
+			refund(player, price);
+			throw e;
+		}
+		if(result == 0) {
+			refund(player, price);
+		} else lastUsed.put(player.getUniqueId(), new UsedResult(result, System.currentTimeMillis() / 1000));
+		return result;
+	}
+
+	/**
+	 * The price to be paid by this player, or {@code null} if the command is free for them.
+	 */
+	private CommandPrice activePrice(Player player) {
+		var price = settings.getPrice().orElse(null);
+		if(price == null || price.getPrice().signum() <= 0 || !Synapse.getInstance().getServiceProvider().isExist(EconomyService.class) || (price.getIgnorePermission() != null && player.hasPermission(price.getIgnorePermission()))) return null;
+		if(price.getCurrency() == null) {
+			// The currency from the config is not registered by the economy plugin: nothing to charge in.
+			SynapsePlugin.getLogger().warn("[" + getCommandNode().getName() + "] Unknown currency in the command price, the command is not charged.");
+			return null;
+		}
+		return price;
+	}
+
+	private void refund(Player player, CommandPrice price) {
+		if(price != null) Synapse.getInstance().getServiceProvider().get(EconomyService.class).getOrCreateUniqueAccount(player).add(price.getCurrency(), price.getPrice());
 	}
 
 	private class IBuilder implements Builder {
